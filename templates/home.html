@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Cluster Resources</h2>
+
+<h3>Nodes</h3>
+<table id="nodesTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for node in nodes %}
+        <tr>
+            <td>{{ node.name }}</td>
+            <td>{{ node.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Pods</h3>
+<table id="podsTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pod in pods %}
+        <tr>
+            <td>{{ pod.name }}</td>
+            <td>{{ pod.namespace }}</td>
+            <td>{{ pod.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Initialize DataTables -->
+<script>
+    $(document).ready(function() {
+        $('#nodesTable').DataTable({
+            "autoWidth": false,  // Disable DataTables autoWidth
+            "responsive": true   // Keep responsiveness enabled
+        });
+        $('#podsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
+
+{% endblock %}

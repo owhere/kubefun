@@ -1,0 +1,46 @@
+/* Table with fixed layout to allow custom column widths */
+table.dataTable {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed; /* Fix table layout */
+    border: 1px solid #ddd;
+}
+
+table.dataTable th, table.dataTable td {
+    border: 1px solid #ccc; /* Cell borders */
+    padding: 10px;          /* Inner spacing */
+    text-align: left;       /* Align text to the left */
+    vertical-align: middle;
+    overflow: hidden;       /* Prevent content overflow */
+    text-overflow: ellipsis; /* Truncate content with ellipsis if needed */
+    white-space: nowrap;    /* Keep text in a single line */
+}
+
+/* Set specific column widths */
+table.dataTable th:nth-child(1),
+table.dataTable td:nth-child(1) {
+    width: 40%; /* First column width */
+}
+
+table.dataTable th:nth-child(2),
+table.dataTable td:nth-child(2) {
+    width: 30%; /* Second column width */
+}
+
+table.dataTable th:nth-child(3),
+table.dataTable td:nth-child(3) {
+    width: 30%; /* Third column width */
+}
+
+table.dataTable th {
+    background-color: #f1f1f1; /* Header styling */
+    font-weight: bold;
+}
+
+table.dataTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Zebra striping */
+}
+
+table.dataTable tbody tr:hover {
+    background-color: #f5f5f5;
+}

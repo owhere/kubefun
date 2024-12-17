@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Cluster Information Section -->
+<h2>Kubernetes Cluster Information</h2>
+<div class="w3-card w3-padding w3-margin-bottom">
+    <p><strong>Cluster Name:</strong> {{ cluster_info.cluster_name }}</p>
+    <p><strong>API Server:</strong> {{ cluster_info.api_server }}</p>
+    <p><strong>Health Status:</strong> 
+        <span class="w3-tag w3-round {% if cluster_info.health_status == 'Healthy' %}w3-green{% else %}w3-red{% endif %}">
+            {{ cluster_info.health_status }}
+        </span>
+    </p>
+    <p><strong>Total Nodes:</strong> {{ cluster_info.healthy_nodes }} / {{ cluster_info.total_nodes }} Healthy</p>
+    <p><strong>Total Pods:</strong> {{ cluster_info.total_pods }}</p>
+    <p><strong>Total Deployments:</strong> {{ cluster_info.total_deployments }}</p>
+    <p><strong>Total Services:</strong> {{ cluster_info.total_services }}</p>
+</div>
+
+<!-- Conditional Search Form and Results -->
+<h2>Search Kubernetes Resources</h2>
+<form action="{{ url_for('search') }}" method="get" class="w3-container w3-padding">
+    <input type="text" name="query" class="w3-input w3-border w3-round" placeholder="Enter keyword..." required value="{{ query }}">
+    <button type="submit" class="w3-button w3-red w3-margin-top">Search</button>
+</form>
+{% if results %}
+<h3>Search Results</h3>
+<table id="searchResultsTable" class="w3-table-all w3-striped w3-bordered">
+    <thead>
+        <tr>
+            <th>Resource Type</th>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td>{{ result.type }}</td>
+            <td>{{ result.name }}</td>
+            <td>{{ result.namespace }}</td>
+            <td>{{ result.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script>
+    $(document).ready(function() {
+        $('#searchResultsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
+{% elif query %}
+
+<p>No resources found matching <strong>{{ query }}</strong>.</p>
+{% endif %}
+<!-- DataTables Initialization -->
+
+{% endblock %}
