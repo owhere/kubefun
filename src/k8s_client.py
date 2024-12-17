@@ -27,6 +27,17 @@ def search_kubernetes_resources(query):
     """
     results = []
 
+     # Search Namespaces
+    namespaces = core_api.list_namespace()
+    for ns in namespaces.items:
+        if query.lower() in ns.metadata.name.lower():
+            results.append({
+                "type": "Namespace",
+                "name": ns.metadata.name,
+                "namespace": "N/A",
+                "status": "Active"
+            })
+
     # Search Pods
     pods = core_api.list_pod_for_all_namespaces()
     for pod in pods.items:
