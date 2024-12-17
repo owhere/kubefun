@@ -16,6 +16,22 @@ def get_nodes():
     nodes = core_api.list_node()
     return [{"name": n.metadata.name, "status": n.status.conditions[-1].type} for n in nodes.items]
 
+def get_namespaces():
+    """
+    Retrieve namespaces from Kubernetes.
+    """
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
+
+    core_api = client.CoreV1Api()
+    namespaces = core_api.list_namespace()
+    return [{
+        "name": ns.metadata.name,
+        "status": "Active" if not ns.status.phase else ns.status.phase
+    } for ns in namespaces.items]
+
 def get_pods():
     """Retrieve pods from Kubernetes."""
     pods = core_api.list_pod_for_all_namespaces()

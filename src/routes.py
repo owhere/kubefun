@@ -1,5 +1,6 @@
 from flask import render_template, request
-from .k8s_client import get_nodes, get_pods, search_kubernetes_resources, get_cluster_info
+from .k8s_client import get_nodes, get_pods, search_kubernetes_resources
+from .k8s_client import get_namespaces, get_cluster_info
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -12,7 +13,8 @@ def init_routes(app):
     @app.route('/kube')
     def kube():
         nodes = get_nodes()
-        return render_template("kube.html", nodes=nodes)
+        namespaces = get_namespaces()
+        return render_template("kube.html", nodes=nodes, namespaces=namespaces)
 
     @app.route('/pods')
     def pods():
