@@ -22,9 +22,36 @@ def get_nodes():
 
 def get_pods():
     """Retrieve pods from Kubernetes."""
-    pods = core_api.list_pod_for_all_namespaces()
-    return [{"name": p.metadata.name, "namespace": p.metadata.namespace, "status": p.status.phase} for p in pods.items]
+    pods = core_api.list_pod_for_all_namespaces().items  # Access the .items attribute
+    replicasets = apps_api.list_replica_set_for_all_namespaces().items  # Access the .items attribute
 
+    pod_data = []
+
+    for pod in pods:
+        # Match pod's ownerReference to a ReplicaSet
+        desired_replicas = "-"
+        ready_replicas = "-"
+
+        for owner in pod.metadata.owner_references or []:
+            if owner.kind == "ReplicaSet":
+                # Find the ReplicaSet in the list
+                rs = next((rs for rs in replicasets if rs.metadata.name == owner.name), None)
+                if rs:
+                    desired_replicas = rs.spec.replicas or 0
+                    ready_replicas = rs.status.ready_replicas or 0
+                    break
+
+        pod_data.append({
+            "name": pod.metadata.name,
+            "namespace": pod.metadata.namespace,
+            "status": pod.status.phase,
+            "desired_replicas": desired_replicas,
+            "ready_replicas": ready_replicas
+        })
+
+    return pod_data
+
+    
 def get_cluster_info():
     """
     Fetch basic cluster information like API server URL, health, and resource counts.
