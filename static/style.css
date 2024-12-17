@@ -16,22 +16,6 @@ table.dataTable th, table.dataTable td {
     white-space: nowrap;    /* Keep text in a single line */
 }
 
-/* Set specific column widths */
-table.dataTable th:nth-child(1),
-table.dataTable td:nth-child(1) {
-    width: 40%; /* First column width */
-}
-
-table.dataTable th:nth-child(2),
-table.dataTable td:nth-child(2) {
-    width: 30%; /* Second column width */
-}
-
-table.dataTable th:nth-child(3),
-table.dataTable td:nth-child(3) {
-    width: 30%; /* Third column width */
-}
-
 table.dataTable th {
     background-color: #f1f1f1; /* Header styling */
     font-weight: bold;

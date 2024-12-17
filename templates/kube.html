@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Cluster Resources</h2>
+<h2>Nodes and Namespaces</h2>
 
 <h3>Nodes</h3>
 <table id="nodesTable" class="dataTable">
@@ -26,6 +26,9 @@
         <tr>
             <th>Name</th>
             <th>Status</th>
+            <th>Pods</th>
+            <th>Deployments</th>
+            <th>Services</th>
         </tr>
     </thead>
     <tbody>
@@ -33,9 +36,25 @@
         <tr>
             <td>{{ namespace.name }}</td>
             <td>{{ namespace.status }}</td>
+            <td>{{ namespace.pods }}</td>
+            <td>{{ namespace.deployments }}</td>
+            <td>{{ namespace.services }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
+<!-- DataTables Initialization -->
+<script>
+    $(document).ready(function() {
+        $('#nodesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#namespacesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
 {% endblock %}

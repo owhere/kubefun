@@ -16,22 +16,6 @@ def get_nodes():
     nodes = core_api.list_node()
     return [{"name": n.metadata.name, "status": n.status.conditions[-1].type} for n in nodes.items]
 
-def get_namespaces():
-    """
-    Retrieve namespaces from Kubernetes.
-    """
-    try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
-
-    core_api = client.CoreV1Api()
-    namespaces = core_api.list_namespace()
-    return [{
-        "name": ns.metadata.name,
-        "status": "Active" if not ns.status.phase else ns.status.phase
-    } for ns in namespaces.items]
-
 def get_pods():
     """Retrieve pods from Kubernetes."""
     pods = core_api.list_pod_for_all_namespaces()
@@ -170,3 +154,45 @@ def get_persistent_volume_claims():
     core_api = client.CoreV1Api()
     pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
     return [{"name": pvc.metadata.name, "namespace": pvc.metadata.namespace, "status": pvc.status.phase} for pvc in pvcs.items]
+
+
+def get_namespaces_with_counts():
+    """
+    Retrieve namespaces with counts for pods, deployments, and services.
+    """
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
+
+    core_api = client.CoreV1Api()
+    apps_api = client.AppsV1Api()
+
+    # Get namespaces
+    namespaces = core_api.list_namespace()
+
+    # Initialize counts per namespace
+    namespace_data = []
+
+    # Fetch all pods, deployments, and services
+    pods = core_api.list_pod_for_all_namespaces().items
+    deployments = apps_api.list_deployment_for_all_namespaces().items
+    services = core_api.list_service_for_all_namespaces().items
+
+    # Aggregate counts
+    for ns in namespaces.items:
+        ns_name = ns.metadata.name
+
+        pod_count = len([p for p in pods if p.metadata.namespace == ns_name])
+        deployment_count = len([d for d in deployments if d.metadata.namespace == ns_name])
+        service_count = len([s for s in services if s.metadata.namespace == ns_name])
+
+        namespace_data.append({
+            "name": ns_name,
+            "status": "Active" if not ns.status.phase else ns.status.phase,
+            "pods": pod_count,
+            "deployments": deployment_count,
+            "services": service_count
+        })
+
+    return namespace_data

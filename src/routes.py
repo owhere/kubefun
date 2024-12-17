@@ -1,6 +1,6 @@
 from flask import render_template, request
 from .k8s_client import get_nodes, get_pods, search_kubernetes_resources
-from .k8s_client import get_namespaces, get_cluster_info
+from .k8s_client import get_namespaces_with_counts, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
 
 def init_routes(app):
@@ -14,8 +14,8 @@ def init_routes(app):
     @app.route('/kube')
     def kube():
         nodes = get_nodes()
-        namespaces = get_namespaces()
-        return render_template("kube.html", nodes=nodes, namespaces=namespaces)
+        namespaces = get_namespaces_with_counts()
+        return render_template('kube.html', nodes=nodes, namespaces=namespaces)
 
     @app.route('/pods')
     def pods():
