@@ -33,8 +33,8 @@ def init_routes(app):
         cluster_info = get_cluster_info()
         return render_template("welcome.html", results=results, query=query, cluster_info=cluster_info)
 
-    @app.route('/volume')
-    def volume():
+    @app.route('/volumes')
+    def volumes():
         storage_classes = get_storage_classes()
         persistent_volumes = get_persistent_volumes()
         persistent_volume_claims = get_persistent_volume_claims()
