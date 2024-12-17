@@ -2,27 +2,35 @@
 {% block content %}
 
 <!-- Cluster Information Section -->
-<h2>Kubernetes Cluster Information</h2>
-<div class="w3-card w3-padding w3-margin-bottom">
-    <p><strong>Cluster Name:</strong> {{ cluster_info.cluster_name }}</p>
-    <p><strong>API Server:</strong> {{ cluster_info.api_server }}</p>
-    <p><strong>Health Status:</strong> 
+<div class="w3-card w3-padding w3-margin-bottom" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <p style="margin: 0;"><strong>Cluster Name:</strong> {{ cluster_info.cluster_name }}</p>
+    <p style="margin: 0;"><strong>API Server:</strong> {{ cluster_info.api_server }}</p>
+    <p style="margin: 0;"><strong>Health Status:</strong> 
         <span class="w3-tag w3-round {% if cluster_info.health_status == 'Healthy' %}w3-green{% else %}w3-red{% endif %}">
             {{ cluster_info.health_status }}
         </span>
     </p>
-    <p><strong>Total Nodes:</strong> {{ cluster_info.healthy_nodes }} / {{ cluster_info.total_nodes }} Healthy</p>
-    <p><strong>Total Pods:</strong> {{ cluster_info.total_pods }}</p>
-    <p><strong>Total Deployments:</strong> {{ cluster_info.total_deployments }}</p>
-    <p><strong>Total Services:</strong> {{ cluster_info.total_services }}</p>
+    <p style="margin: 0;"><strong>Total Nodes:</strong> 
+        <span class="{% if cluster_info.healthy_nodes == cluster_info.total_nodes %}w3-green{% else %}w3-red{% endif %}">
+            {{ cluster_info.healthy_nodes }} / {{ cluster_info.total_nodes }}
+        </span> 
+    </p>
+    <p style="margin: 0;">Total Pods: <strong>{{ cluster_info.total_pods }}</strong></p>
+    <p style="margin: 0;">Total Deployments:<strong>{{ cluster_info.total_deployments }}</strong></p>
+    <p style="margin: 0;">Total Services: <strong>{{ cluster_info.total_services }}</strong></p>
 </div>
 
-<!-- Conditional Search Form and Results -->
-<h2>Search Kubernetes Resources</h2>
-<form action="{{ url_for('search') }}" method="get" class="w3-container w3-padding">
-    <input type="text" name="query" class="w3-input w3-border w3-round" placeholder="Enter keyword..." required value="{{ query }}">
-    <button type="submit" class="w3-button w3-red w3-margin-top">Search</button>
-</form>
+<!-- Search Form in the Middle of the Page -->
+<div style="display: flex; justify-content: center; margin: 3rem 0;">
+    <div style="text-align: center;">
+        <h2>Search Kubernetes Resources</h2>
+        <form action="{{ url_for('search') }}" method="get" class="w3-container w3-padding">
+            <input type="text" name="query" class="w3-input w3-border w3-round" placeholder="Enter keyword..." required value="{{ query }}" style="width: 300px; margin: auto;">
+            <button type="submit" class="w3-button w3-red w3-margin-top">Search</button>
+        </form>
+    </div>
+</div>
+
 {% if results %}
 <h3>Search Results</h3>
 <table id="searchResultsTable" class="w3-table-all w3-striped w3-bordered">

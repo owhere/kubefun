@@ -2,6 +2,22 @@
 {% block content %}
 <h2>Cluster Resources</h2>
 
-<h3>Kubes</h3>
+<h3>Nodes</h3>
+<table id="nodesTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for node in nodes %}
+        <tr>
+            <td>{{ node.name }}</td>
+            <td>{{ node.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}

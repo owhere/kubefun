@@ -8,12 +8,16 @@ def init_routes(app):
     def welcome():
         cluster_info = get_cluster_info()
         return render_template("welcome.html", cluster_info=cluster_info)
-
-    @app.route('/home')
-    def home():
+    
+    @app.route('/kube')
+    def kube():
         nodes = get_nodes()
+        return render_template("kube.html", nodes=nodes)
+
+    @app.route('/pods')
+    def pods():
         pods = get_pods()
-        return render_template("home.html", nodes=nodes, pods=pods)
+        return render_template("pods.html", pods=pods)
 
     @app.route('/search')
     def search():
@@ -25,10 +29,6 @@ def init_routes(app):
 
         cluster_info = get_cluster_info()
         return render_template("welcome.html", results=results, query=query, cluster_info=cluster_info)
-
-    @app.route('/kube')
-    def kube():
-        return render_template("kube.html")
 
     @app.route('/volume')
     def volume():
