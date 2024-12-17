@@ -137,3 +137,36 @@ def get_cluster_info():
     cluster_info["total_services"] = len(services.items)
 
     return cluster_info
+
+def get_storage_classes():
+    """Retrieve Storage Classes from Kubernetes."""
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
+
+    storage_api = client.StorageV1Api()
+    storage_classes = storage_api.list_storage_class()
+    return [{"name": sc.metadata.name, "provisioner": sc.provisioner} for sc in storage_classes.items]
+
+def get_persistent_volumes():
+    """Retrieve Persistent Volumes (PVs) from Kubernetes."""
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
+
+    core_api = client.CoreV1Api()
+    pvs = core_api.list_persistent_volume()
+    return [{"name": pv.metadata.name, "capacity": pv.spec.capacity['storage'], "status": pv.status.phase} for pv in pvs.items]
+
+def get_persistent_volume_claims():
+    """Retrieve Persistent Volume Claims (PVCs) from Kubernetes."""
+    try:
+        config.load_kube_config()
+    except Exception:
+        config.load_incluster_config()
+
+    core_api = client.CoreV1Api()
+    pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
+    return [{"name": pvc.metadata.name, "namespace": pvc.metadata.namespace, "status": pvc.status.phase} for pvc in pvcs.items]

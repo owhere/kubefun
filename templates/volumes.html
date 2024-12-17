@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Cluster Volumes</h2>
+
+<h3>Storage Classes</h3>
+<table id="storageClassesTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Provisioner</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sc in storage_classes %}
+        <tr>
+            <td>{{ sc.name }}</td>
+            <td>{{ sc.provisioner }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Persistent Volumes (PVs)</h3>
+<table id="pvsTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Capacity</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pv in persistent_volumes %}
+        <tr>
+            <td>{{ pv.name }}</td>
+            <td>{{ pv.capacity }}</td>
+            <td>{{ pv.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Persistent Volume Claims (PVCs)</h3>
+<table id="pvcsTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pvc in persistent_volume_claims %}
+        <tr>
+            <td>{{ pvc.name }}</td>
+            <td>{{ pvc.namespace }}</td>
+            <td>{{ pvc.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- DataTables Initialization -->
+<script>
+    $(document).ready(function() {
+        $('#storageClassesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#pvsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#pvcsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
+{% endblock %}
