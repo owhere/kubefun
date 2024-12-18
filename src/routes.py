@@ -2,6 +2,7 @@ from flask import render_template, request
 from .k8s_client import get_nodes, get_pods, search_kubernetes_resources
 from .k8s_client import get_namespaces_with_counts, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
+from .k8s_client import get_node_details, get_namespace_details
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -43,6 +44,19 @@ def init_routes(app):
                             storage_classes=storage_classes, 
                             persistent_volumes=persistent_volumes, 
                             persistent_volume_claims=persistent_volume_claims)
+
+    @app.route('/node/<node_name>')
+    def node_detail(node_name):
+        """Route to display details of a specific node."""
+        node_details = get_node_details(node_name)
+        return render_template('details.html', resource_name=node_name, resource_type="Node", details=node_details)
+
+
+    @app.route('/namespace/<namespace_name>')
+    def namespace_detail(namespace_name):
+        """Route to display details of a specific namespace."""
+        namespace_details = get_namespace_details(namespace_name)
+        return render_template('details.html', resource_name=namespace_name, resource_type="Namespace", details=namespace_details)
 
 
     @app.route('/apps')

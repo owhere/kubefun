@@ -20,6 +20,13 @@ def get_nodes():
     nodes = core_api.list_node()
     return [{"name": n.metadata.name, "status": n.status.conditions[-1].type} for n in nodes.items]
 
+def get_node_details(node_name):
+    """
+    Retrieve detailed information about a specific node.
+    """
+    node = core_api.read_node(name=node_name)
+    return node.to_dict()  # Convert the object to a dictionary for easier display
+
 def get_pods():
     """Retrieve pods from Kubernetes."""
     pods = core_api.list_pod_for_all_namespaces().items  # Access the .items attribute
@@ -121,6 +128,13 @@ def get_persistent_volume_claims():
     core_api = client.CoreV1Api()
     pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
     return [{"name": pvc.metadata.name, "namespace": pvc.metadata.namespace, "status": pvc.status.phase} for pvc in pvcs.items]
+
+def get_namespace_details(namespace_name):
+    """
+    Retrieve detailed information about a specific namespace.
+    """
+    namespace = core_api.read_namespace(name=namespace_name)
+    return namespace.to_dict()  # Convert the object to a dictionary for easier display
 
 def get_namespaces_with_counts():
     """

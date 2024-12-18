@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ resource_type }}: {{ resource_name }}</h2>
+
+<div class="w3-card w3-padding">
+    <pre>
+        {{ details | tojson(indent=2) | safe }}
+    </pre>
+</div>
+
+<a href="{{ url_for('kube') }}" class="w3-button w3-margin-top">Back to Cluster Resources</a>
+{% endblock %}

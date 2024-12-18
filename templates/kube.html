@@ -13,7 +13,7 @@
     <tbody>
         {% for node in nodes %}
         <tr>
-            <td>{{ node.name }}</td>
+            <td><a href="{{ url_for('node_detail', node_name=node.name) }}">{{ node.name }}</a></td>
             <td>{{ node.status }}</td>
         </tr>
         {% endfor %}
@@ -34,7 +34,7 @@
     <tbody>
         {% for namespace in namespaces %}
         <tr>
-            <td>{{ namespace.name }}</td>
+            <td><a href="{{ url_for('namespace_detail', namespace_name=namespace.name) }}">{{ namespace.name }}</a></td>
             <td>{{ namespace.status }}</td>
             <td>{{ namespace.pods }}</td>
             <td>{{ namespace.deployments }}</td>
