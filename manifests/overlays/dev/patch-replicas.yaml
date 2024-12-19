@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubefun-app
+  namespace: kubefun
+spec:
+  replicas: 2

@@ -1,0 +1,5 @@
+# kustomization.yaml
+namespace: kubefun
+resources:
+  - deployment.yaml
+  - service.yaml

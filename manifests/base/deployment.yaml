@@ -1,0 +1,21 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubefun-app
+  namespace: kubefun
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubefun-app
+  template:
+    metadata:
+      labels:
+        app: kubefun-app
+    spec:
+      containers:
+        - name: kubefun-app
+          image: oxfordfun/kubefun:latest
+          ports:
+            - containerPort: 5000

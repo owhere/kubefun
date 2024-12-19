@@ -1,0 +1,13 @@
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubefun-app
+  namespace: kubefun
+spec:
+  type: NodePort
+  selector:
+    app: kubefun-app
+  ports:
+    - port: 39027
+      targetPort: 5000
