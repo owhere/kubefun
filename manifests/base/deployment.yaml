@@ -1,4 +1,4 @@
-# deployment.yaml
+# manifests/base/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,8 +14,12 @@ spec:
       labels:
         app: kubefun-app
     spec:
+      serviceAccountName: kubefun-app-sa
       containers:
         - name: kubefun-app
           image: oxfordfun/kubefun:latest
           ports:
             - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: aws-env

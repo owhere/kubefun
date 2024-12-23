@@ -1,0 +1,9 @@
+# manifests/base/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubefun-app-role
+rules:
+  - apiGroups: ["*"]          # All API groups
+    resources: ["*"]          # All resources
+    verbs: ["*"]              # All operations (get, list, watch, create, update, delete, etc.)

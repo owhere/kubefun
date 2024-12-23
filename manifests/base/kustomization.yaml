@@ -1,5 +1,8 @@
-# kustomization.yaml
+# manifests/base/kustomization.yaml
 namespace: kubefun
 resources:
   - deployment.yaml
   - service.yaml
+  - serviceaccount.yaml
+  - role.yaml
+  - rolebinding.yaml
