@@ -1,6 +1,10 @@
 from kubernetes import client, config
 import os
 
+import logging
+
+logger = logging.getLogger(__name__) 
+
 # Load Kubernetes configuration
 try:
     config.load_kube_config()  # Local kubeconfig
@@ -185,7 +189,7 @@ def search_kubernetes_resources(query):
         config.load_kube_config()
     except Exception:
         config.load_incluster_config()
-
+   
     core_api = client.CoreV1Api()
     apps_api = client.AppsV1Api()
     batch_api = client.BatchV1Api()
@@ -198,6 +202,8 @@ def search_kubernetes_resources(query):
 
     results = []
 
+    logger.info(f"Searching for cluster-level resources matching query: '{query}'")
+    
     # Cluster-Level Resources
     # Nodes
     nodes = core_api.list_node()
@@ -232,6 +238,53 @@ def search_kubernetes_resources(query):
                 "status": sc.provisioner
             })
 
+    # CRDs
+    crds = api_ext.list_custom_resource_definition()
+    for crd in crds.items:
+        if query.lower() in crd.metadata.name.lower():
+            results.append({
+                "type": "Custom Resource Definition",
+                "name": crd.metadata.name,
+                "namespace": "N/A",
+                "status": "Defined"
+            })
+
+    # Services
+    services = core_api.list_service_for_all_namespaces()
+    for service in services.items:
+        if query.lower() in service.metadata.name.lower() or query.lower() in service.metadata.namespace.lower():
+            results.append({
+                "type": "Service",
+                "name": service.metadata.name,
+                "namespace": service.metadata.namespace,
+                "status": "Available"
+            })
+
+    logger.info(f"Searching for namespace-scoped resources matching query: '{query}'")
+
+    # Secrets
+    secrets = core_api.list_secret_for_all_namespaces()
+    for secret in secrets.items:
+        if query.lower() in secret.metadata.name.lower() or query.lower() in secret.metadata.namespace.lower():
+            results.append({
+                "type": "Secret",
+                "name": secret.metadata.name,
+                "namespace": secret.metadata.namespace,
+                "status": "N/A"
+            })
+            logger.info(f"Matched Secret: {secret.metadata.name} in Namespace: {secret.metadata.namespace}")
+
+    # Jobs
+    jobs = batch_api.list_job_for_all_namespaces()
+    for job in jobs.items:
+        if query.lower() in job.metadata.name.lower() or query.lower() in job.metadata.namespace.lower():
+            results.append({
+                "type": "Job",
+                "name": job.metadata.name,
+                "namespace": job.metadata.namespace,
+                "status": "Complete" if job.status.succeeded else "In Progress"
+            })
+
     # ClusterRoles
     cluster_roles = rbac_api.list_cluster_role()
     for cr in cluster_roles.items:
@@ -244,25 +297,14 @@ def search_kubernetes_resources(query):
             })
 
     # ClusterRoleBindings
-    cluster_role_bindings = rbac_api.list_cluster_role_binding()
-    for crb in cluster_role_bindings.items:
-        if query.lower() in crb.metadata.name.lower():
+    role_bindings = rbac_api.list_role_binding_for_all_namespaces()
+    for rb in role_bindings.items:
+        if query.lower() in rb.metadata.name.lower() or query.lower() in rb.metadata.namespace.lower():
             results.append({
-                "type": "ClusterRoleBinding",
-                "name": crb.metadata.name,
-                "namespace": "N/A",
-                "status": "Bound"
-            })
-
-    # CRDs
-    crds = api_ext.list_custom_resource_definition()
-    for crd in crds.items:
-        if query.lower() in crd.metadata.name.lower():
-            results.append({
-                "type": "Custom Resource Definition",
-                "name": crd.metadata.name,
-                "namespace": "N/A",
-                "status": "Defined"
+                "type": "RoleBinding",
+                "name": rb.metadata.name,
+                "namespace": rb.metadata.namespace,
+                "status": "Configured"
             })
 
     # MutatingWebhookConfigurations
@@ -287,7 +329,6 @@ def search_kubernetes_resources(query):
                 "status": "Configured"
             })
 
-    # Namespace-Scoped Resources
     # Namespaces
     namespaces = core_api.list_namespace()
     for ns in namespaces.items:
@@ -335,7 +376,7 @@ def search_kubernetes_resources(query):
     # Deployments
     deployments = apps_api.list_deployment_for_all_namespaces()
     for deployment in deployments.items:
-        if query.lower() in deployment.metadata.name.lower():
+        if query.lower() in deployment.metadata.name.lower() or query.lower() in deployment.metadata.namespace.lower():
             results.append({
                 "type": "Deployment",
                 "name": deployment.metadata.name,
@@ -366,4 +407,8 @@ def search_kubernetes_resources(query):
             })
 
     return results
+
+if __name__ == "__main__":
+    logger.info("Testing logging in k8s_client.py")
+    search_kubernetes_resources('kubefun')
 
