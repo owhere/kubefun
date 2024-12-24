@@ -1,5 +1,6 @@
 from flask import Flask
 from src.routes import init_routes
+from src.k8s_client import load_kube_config
 
 import logging
 
@@ -13,6 +14,8 @@ logging.basicConfig(
 
 # Create Flask app
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+load_kube_config()
 
 # Initialize routes
 init_routes(app)

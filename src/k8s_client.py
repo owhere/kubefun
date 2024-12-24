@@ -1,179 +1,299 @@
+import logging
 from kubernetes import client, config
 import os
 
-import logging
-
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 # Load Kubernetes configuration
-try:
-    config.load_kube_config()  # Local kubeconfig
-except Exception:
-    config.load_incluster_config()  # In-cluster config
+def load_kube_config():
+    try:
+        config.load_kube_config()
+        logger.info("Loaded kube config from local file.")
+    except Exception:
+        config.load_incluster_config()
+        logger.info("Loaded in-cluster kube config.")
 
-# Initialize Kubernetes API clients
-core_api = client.CoreV1Api()
-apps_api = client.AppsV1Api()
-    
-storage_api = client.StorageV1Api()
-rbac_api = client.RbacAuthorizationV1Api()
-api_ext = client.ApiextensionsV1Api()
-
+# Node Functions
 def get_nodes():
-    """Retrieve nodes from Kubernetes."""
+    """Retrieve all nodes in the cluster."""
+    core_api = client.CoreV1Api()
     nodes = core_api.list_node()
-    return [{"name": n.metadata.name, "status": n.status.conditions[-1].type} for n in nodes.items]
+    return [
+        {
+            "type": "Node",
+            "name": node.metadata.name,
+            "status": "Ready" if any(
+                cond.type == "Ready" and cond.status == "True"
+                for cond in node.status.conditions
+            ) else "NotReady"
+        }
+        for node in nodes.items
+    ]
 
-def get_node_details(node_name):
-    """
-    Retrieve detailed information about a specific node.
-    """
-    node = core_api.read_node(name=node_name)
-    return node.to_dict()  # Convert the object to a dictionary for easier display
+def search_nodes(query):
+    """Search nodes by name."""
+    nodes = get_nodes()
+    return [node for node in nodes if query.lower() in node["name"].lower()]
 
-def get_pods():
+# Pod Functions
+def get_pods(namespace=None):
     """Retrieve pods from Kubernetes."""
-    pods = core_api.list_pod_for_all_namespaces().items  # Access the .items attribute
-    replicasets = apps_api.list_replica_set_for_all_namespaces().items  # Access the .items attribute
+    core_api = client.CoreV1Api()
+    if namespace:
+        pods = core_api.list_namespaced_pod(namespace)
+    else:
+        pods = core_api.list_pod_for_all_namespaces()
 
-    pod_data = []
-
-    for pod in pods:
-        # Match pod's ownerReference to a ReplicaSet
-        desired_replicas = "-"
-        ready_replicas = "-"
-
-        for owner in pod.metadata.owner_references or []:
-            if owner.kind == "ReplicaSet":
-                # Find the ReplicaSet in the list
-                rs = next((rs for rs in replicasets if rs.metadata.name == owner.name), None)
-                if rs:
-                    desired_replicas = rs.spec.replicas or 0
-                    ready_replicas = rs.status.ready_replicas or 0
-                    break
-
-        pod_data.append({
+    return [
+        {
+            "type": "Pod",
             "name": pod.metadata.name,
             "namespace": pod.metadata.namespace,
-            "status": pod.status.phase,
-            "desired_replicas": desired_replicas,
-            "ready_replicas": ready_replicas
-        })
+            "status": pod.status.phase
+        }
+        for pod in pods.items
+    ]
 
-    return pod_data
+def search_pods(query, namespace=None):
+    """Search pods by name or namespace."""
+    pods = get_pods(namespace)
+    return [
+        pod for pod in pods
+        if query.lower() in pod["name"].lower() or query.lower() in pod["namespace"].lower()
+    ]
 
-    
-def get_cluster_info():
-    """
-    Fetch basic cluster information like API server URL, health, and resource counts.
-    """
-    cluster_info = {}
+# Namespace Functions
+def get_namespaces():
+    """Retrieve all namespaces in the cluster."""
+    core_api = client.CoreV1Api()
+    namespaces = core_api.list_namespace()
+    return [
+        {
+            "type": "Namespace",
+            "name": ns.metadata.name,
+            "status": ns.status.phase
+        }
+        for ns in namespaces.items
+    ]
 
-    # API Server URL
-    current_config = client.Configuration.get_default_copy()
-    cluster_info["api_server"] = current_config.host
 
-    # Context Name (Cluster Name derived from kubeconfig)
-    cluster_info["cluster_name"] = os.getenv("KUBERNETES_CLUSTER_NAME", "Unknown Cluster")
+def search_namespaces(query):
+    """Search namespaces by name."""
+    namespaces = get_namespaces()
+    return [ns for ns in namespaces if query.lower() in ns["name"].lower()]
 
-    # Check Node Health
-    nodes = core_api.list_node()
-    total_nodes = len(nodes.items)
-    ready_nodes = sum(1 for node in nodes.items if any(
-        cond.type == "Ready" and cond.status == "True" for cond in node.status.conditions
-    ))
 
-    cluster_info["total_nodes"] = total_nodes
-    cluster_info["healthy_nodes"] = ready_nodes
-    cluster_info["health_status"] = "Healthy" if total_nodes == ready_nodes else "Unhealthy"
+# Deployment Functions
+def get_deployments(namespace=None):
+    """Retrieve deployments from Kubernetes."""
+    apps_api = client.AppsV1Api()
+    if namespace:
+        deployments = apps_api.list_namespaced_deployment(namespace)
+    else:
+        deployments = apps_api.list_deployment_for_all_namespaces()
 
-    # Count Pods
-    pods = core_api.list_pod_for_all_namespaces()
-    cluster_info["total_pods"] = len(pods.items)
+    return [
+        {
+            "type": "Deployment",
+            "name": dep.metadata.name,
+            "namespace": dep.metadata.namespace,
+            "replicas": dep.spec.replicas,
+            "ready_replicas": dep.status.ready_replicas or 0
+        }
+        for dep in deployments.items
+    ]
 
-    # Count Deployments
-    deployments = apps_api.list_deployment_for_all_namespaces()
-    cluster_info["total_deployments"] = len(deployments.items)
 
-    # Count Services
-    services = core_api.list_service_for_all_namespaces()
-    cluster_info["total_services"] = len(services.items)
+def search_deployments(query, namespace=None):
+    """Search deployments by name or namespace."""
+    deployments = get_deployments(namespace)
+    return [
+        dep for dep in deployments
+        if query.lower() in dep["name"].lower() or query.lower() in dep["namespace"].lower()
+    ]
 
-    return cluster_info
 
+# Service Functions
+def get_services(namespace=None):
+    """Retrieve services from Kubernetes."""
+    core_api = client.CoreV1Api()
+    if namespace:
+        services = core_api.list_namespaced_service(namespace)
+    else:
+        services = core_api.list_service_for_all_namespaces()
+
+    return [
+        {
+            "type": "Service",
+            "name": service.metadata.name,
+            "namespace": service.metadata.namespace,
+            "status": "Available"  # Services generally don't have a status like pods
+        }
+        for service in services.items
+    ]
+
+def search_services(query, namespace=None):
+    """Search services by name or namespace."""
+    services = get_services(namespace)
+    return [
+        service for service in services
+        if query.lower() in service["name"].lower() or query.lower() in service["namespace"].lower()
+    ]
+
+# Secrets Functions
+def get_secrets(namespace=None):
+    """Retrieve secrets from Kubernetes."""
+    core_api = client.CoreV1Api()
+    if namespace:
+        secrets = core_api.list_namespaced_secret(namespace)
+    else:
+        secrets = core_api.list_secret_for_all_namespaces()
+
+    return [
+        {
+            "type": "Secret",
+            "name": secret.metadata.name,
+            "namespace": secret.metadata.namespace,
+            "type": secret.type
+        }
+        for secret in secrets.items
+    ]
+
+def search_secrets(query, namespace=None):
+    """Search secrets by name or namespace."""
+    secrets = get_secrets(namespace)
+    return [
+        secret for secret in secrets
+        if query.lower() in secret["name"].lower() or query.lower() in secret["namespace"].lower()
+    ]
+
+# Storage Class Functions
 def get_storage_classes():
-    """Retrieve Storage Classes from Kubernetes."""
-    try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
-
+    """Retrieve storage classes from Kubernetes."""
+    storage_api = client.StorageV1Api()
     storage_classes = storage_api.list_storage_class()
-    return [{"name": sc.metadata.name, "provisioner": sc.provisioner} for sc in storage_classes.items]
 
+    return [
+        {
+            "type": "Storage Class",
+            "name": sc.metadata.name,
+            "provisioner": sc.provisioner
+        }
+        for sc in storage_classes.items
+    ]
+
+
+def search_storage_classes(query):
+    """Search storage classes by name."""
+    storage_classes = get_storage_classes()
+    return [sc for sc in storage_classes if query.lower() in sc["name"].lower()]
+
+
+# Persistent Volume (PV) Functions
 def get_persistent_volumes():
-    """Retrieve Persistent Volumes (PVs) from Kubernetes."""
-    try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
-
+    """Retrieve persistent volumes from Kubernetes."""
     core_api = client.CoreV1Api()
     pvs = core_api.list_persistent_volume()
-    return [{"name": pv.metadata.name, "capacity": pv.spec.capacity['storage'], "status": pv.status.phase} for pv in pvs.items]
 
-def get_persistent_volume_claims():
-    """Retrieve Persistent Volume Claims (PVCs) from Kubernetes."""
-    try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
+    return [
+        {
+            "type": "PV",
+            "name": pv.metadata.name,
+            "capacity": pv.spec.capacity["storage"],
+            "status": pv.status.phase,
+            "storage_class": pv.spec.storage_class_name
+        }
+        for pv in pvs.items
+    ]
 
+
+def search_persistent_volumes(query):
+    """Search persistent volumes by name."""
+    pvs = get_persistent_volumes()
+    return [pv for pv in pvs if query.lower() in pv["name"].lower()]
+
+
+# Persistent Volume Claim (PVC) Functions
+def get_persistent_volume_claims(namespace=None):
+    """Retrieve persistent volume claims from Kubernetes."""
     core_api = client.CoreV1Api()
-    pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
-    return [{"name": pvc.metadata.name, "namespace": pvc.metadata.namespace, "status": pvc.status.phase} for pvc in pvcs.items]
+    if namespace:
+        pvcs = core_api.list_namespaced_persistent_volume_claim(namespace)
+    else:
+        pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
 
-def get_namespace_details(namespace_name):
+    return [
+        {
+            "type": "PVC",
+            "name": pvc.metadata.name,
+            "namespace": pvc.metadata.namespace,
+            "storage_class": pvc.spec.storage_class_name,
+            "capacity": pvc.status.capacity.get("storage", "Unknown") if pvc.status.capacity else "Unknown",
+            "status": pvc.status.phase
+        }
+        for pvc in pvcs.items
+    ]
+
+
+def search_persistent_volume_claims(query, namespace=None):
+    """Search persistent volume claims by name or namespace."""
+    pvcs = get_persistent_volume_claims(namespace)
+    return [
+        pvc for pvc in pvcs
+        if query.lower() in pvc["name"].lower() or query.lower() in pvc["namespace"].lower()
+    ]
+
+
+# General Search
+def search_kubernetes_resources(query):
     """
-    Retrieve detailed information about a specific namespace.
+    Search all Kubernetes resources by name or namespace.
     """
-    namespace = core_api.read_namespace(name=namespace_name)
-    return namespace.to_dict()  # Convert the object to a dictionary for easier display
+    logger.info(f"Starting global search for query: '{query}'")
+    results = []
+
+    results.extend(search_namespaces(query))
+    results.extend(search_nodes(query))
+    results.extend(search_pods(query))
+    results.extend(search_services(query))
+    results.extend(search_secrets(query))
+    results.extend(search_deployments(query))
+    results.extend(search_persistent_volumes(query))
+    results.extend(search_persistent_volume_claims(query))
+    results.extend(search_storage_classes(query))
+
+
+    logger.info(f"Global search completed. Found {len(results)} matching resources.")
+    return results
 
 def get_namespaces_with_counts():
     """
     Retrieve namespaces with counts for pods, deployments, and services.
     """
-    try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
-
-    core_api = client.CoreV1Api()
-    apps_api = client.AppsV1Api()
 
     # Get namespaces
-    namespaces = core_api.list_namespace()
+    namespaces = get_namespaces()
 
     # Initialize counts per namespace
     namespace_data = []
 
     # Fetch all pods, deployments, and services
-    pods = core_api.list_pod_for_all_namespaces().items
-    deployments = apps_api.list_deployment_for_all_namespaces().items
-    services = core_api.list_service_for_all_namespaces().items
+    pods = get_pods()
+    deployments = get_deployments()
+    services = get_services()
 
     # Aggregate counts
-    for ns in namespaces.items:
-        ns_name = ns.metadata.name
+    for ns in namespaces:
+        ns_name = ns["name"]
 
-        pod_count = len([p for p in pods if p.metadata.namespace == ns_name])
-        deployment_count = len([d for d in deployments if d.metadata.namespace == ns_name])
-        service_count = len([s for s in services if s.metadata.namespace == ns_name])
+        # Count resources by namespace
+        pod_count = len([p for p in pods if p["namespace"] == ns_name])
+        deployment_count = len([d for d in deployments if d["namespace"] == ns_name])
+        service_count = len([s for s in services if s["namespace"] == ns_name])
 
         namespace_data.append({
             "name": ns_name,
-            "status": "Active" if not ns.status.phase else ns.status.phase,
+            "status": "Active" if not ns["status"] else ns["status"],
             "pods": pod_count,
             "deployments": deployment_count,
             "services": service_count
@@ -181,234 +301,83 @@ def get_namespaces_with_counts():
 
     return namespace_data
 
-def search_kubernetes_resources(query):
+def get_cluster_info():
     """
-    Search Kubernetes resources (namespace-scoped and cluster-level) that match the given keyword.
+    Fetch basic cluster information like API server URL, health, and resource counts.
     """
+    cluster_info = {}
+
+    # API Server URL
     try:
-        config.load_kube_config()
-    except Exception:
-        config.load_incluster_config()
-   
+        current_config = client.Configuration.get_default_copy()
+        cluster_info["api_server"] = current_config.host
+    except Exception as e:
+        logger.error(f"Error fetching API server URL: {e}")
+        cluster_info["api_server"] = "Unknown"
+
+    # Context Name (Cluster Name)
+    cluster_info["cluster_name"] = os.getenv("KUBERNETES_CLUSTER_NAME", "Unknown Cluster")
+
+    # Check Node Health
+    try:
+        nodes = get_nodes()
+        total_nodes = len(nodes)
+        ready_nodes = sum(1 for node in nodes if node["status"] == "Ready")
+        cluster_info["total_nodes"] = total_nodes
+        cluster_info["healthy_nodes"] = ready_nodes
+        cluster_info["health_status"] = "Healthy" if total_nodes == ready_nodes else "Unhealthy"
+    except Exception as e:
+        logger.error(f"Error fetching nodes: {e}")
+        cluster_info["total_nodes"] = 0
+        cluster_info["healthy_nodes"] = 0
+        cluster_info["health_status"] = "Unknown"
+
+    # Count Pods
+    try:
+        pods = get_pods()
+        cluster_info["total_pods"] = len(pods)
+    except Exception as e:
+        logger.error(f"Error fetching pods: {e}")
+        cluster_info["total_pods"] = 0
+
+    # Count Namespaces
+    try:
+        namespaces = get_namespaces()
+        cluster_info["total_namespaces"] = len(namespaces)
+    except Exception as e:
+        logger.error(f"Error fetching namespaces: {e}")
+        cluster_info["total_namespaces"] = 0
+
+    # Count Deployments
+    try:
+        deployments = get_deployments()
+        cluster_info["total_deployments"] = len(deployments)
+    except Exception as e:
+        logger.error(f"Error fetching deployments: {e}")
+        cluster_info["total_deployments"] = 0
+
+    # Count Services
+    try:
+        services = get_services()
+        cluster_info["total_services"] = len(services)
+    except Exception as e:
+        logger.error(f"Error fetching services: {e}")
+        cluster_info["total_services"] = 0
+
+    return cluster_info
+
+def get_node_details(node_name):
+    """
+    Retrieve detailed information about a specific node.
+    """
     core_api = client.CoreV1Api()
-    apps_api = client.AppsV1Api()
-    batch_api = client.BatchV1Api()
-    networking_api = client.NetworkingV1Api()
-    storage_api = client.StorageV1Api()
-    rbac_api = client.RbacAuthorizationV1Api()
-    admission_api = client.AdmissionregistrationV1Api()
-    api_registration_api = client.ApiregistrationV1Api()
-    api_ext = client.ApiextensionsV1Api()
+    node = core_api.read_node(name=node_name)
+    return node.to_dict()  # Convert the object to a dictionary for easier display
 
-    results = []
-
-    logger.info(f"Searching for cluster-level resources matching query: '{query}'")
-    
-    # Cluster-Level Resources
-    # Nodes
-    nodes = core_api.list_node()
-    for node in nodes.items:
-        if query.lower() in node.metadata.name.lower():
-            results.append({
-                "type": "Node",
-                "name": node.metadata.name,
-                "namespace": "N/A",
-                "status": "Ready" if any(cond.type == "Ready" and cond.status == "True" for cond in node.status.conditions) else "NotReady"
-            })
-
-    # Persistent Volumes
-    pvs = core_api.list_persistent_volume()
-    for pv in pvs.items:
-        if query.lower() in pv.metadata.name.lower():
-            results.append({
-                "type": "Persistent Volume",
-                "name": pv.metadata.name,
-                "namespace": "N/A",
-                "status": pv.status.phase
-            })
-
-    # Storage Classes
-    storage_classes = storage_api.list_storage_class()
-    for sc in storage_classes.items:
-        if query.lower() in sc.metadata.name.lower():
-            results.append({
-                "type": "Storage Class",
-                "name": sc.metadata.name,
-                "namespace": "N/A",
-                "status": sc.provisioner
-            })
-
-    # CRDs
-    crds = api_ext.list_custom_resource_definition()
-    for crd in crds.items:
-        if query.lower() in crd.metadata.name.lower():
-            results.append({
-                "type": "Custom Resource Definition",
-                "name": crd.metadata.name,
-                "namespace": "N/A",
-                "status": "Defined"
-            })
-
-    # Services
-    services = core_api.list_service_for_all_namespaces()
-    for service in services.items:
-        if query.lower() in service.metadata.name.lower() or query.lower() in service.metadata.namespace.lower():
-            results.append({
-                "type": "Service",
-                "name": service.metadata.name,
-                "namespace": service.metadata.namespace,
-                "status": "Available"
-            })
-
-    logger.info(f"Searching for namespace-scoped resources matching query: '{query}'")
-
-    # Secrets
-    secrets = core_api.list_secret_for_all_namespaces()
-    for secret in secrets.items:
-        if query.lower() in secret.metadata.name.lower() or query.lower() in secret.metadata.namespace.lower():
-            results.append({
-                "type": "Secret",
-                "name": secret.metadata.name,
-                "namespace": secret.metadata.namespace,
-                "status": "N/A"
-            })
-            logger.info(f"Matched Secret: {secret.metadata.name} in Namespace: {secret.metadata.namespace}")
-
-    # Jobs
-    jobs = batch_api.list_job_for_all_namespaces()
-    for job in jobs.items:
-        if query.lower() in job.metadata.name.lower() or query.lower() in job.metadata.namespace.lower():
-            results.append({
-                "type": "Job",
-                "name": job.metadata.name,
-                "namespace": job.metadata.namespace,
-                "status": "Complete" if job.status.succeeded else "In Progress"
-            })
-
-    # ClusterRoles
-    cluster_roles = rbac_api.list_cluster_role()
-    for cr in cluster_roles.items:
-        if query.lower() in cr.metadata.name.lower():
-            results.append({
-                "type": "ClusterRole",
-                "name": cr.metadata.name,
-                "namespace": "N/A",
-                "status": "Defined"
-            })
-
-    # ClusterRoleBindings
-    role_bindings = rbac_api.list_role_binding_for_all_namespaces()
-    for rb in role_bindings.items:
-        if query.lower() in rb.metadata.name.lower() or query.lower() in rb.metadata.namespace.lower():
-            results.append({
-                "type": "RoleBinding",
-                "name": rb.metadata.name,
-                "namespace": rb.metadata.namespace,
-                "status": "Configured"
-            })
-
-    # MutatingWebhookConfigurations
-    mwcs = admission_api.list_mutating_webhook_configuration()
-    for mwc in mwcs.items:
-        if query.lower() in mwc.metadata.name.lower():
-            results.append({
-                "type": "MutatingWebhookConfiguration",
-                "name": mwc.metadata.name,
-                "namespace": "N/A",
-                "status": "Configured"
-            })
-
-    # ValidatingWebhookConfigurations
-    vwcs = admission_api.list_validating_webhook_configuration()
-    for vwc in vwcs.items:
-        if query.lower() in vwc.metadata.name.lower():
-            results.append({
-                "type": "ValidatingWebhookConfiguration",
-                "name": vwc.metadata.name,
-                "namespace": "N/A",
-                "status": "Configured"
-            })
-
-    # Namespaces
-    namespaces = core_api.list_namespace()
-    for ns in namespaces.items:
-        if query.lower() in ns.metadata.name.lower():
-            results.append({
-                "type": "Namespace",
-                "name": ns.metadata.name,
-                "namespace": "N/A",
-                "status": "Active"
-            })
-
-    # Pods
-    pods = core_api.list_pod_for_all_namespaces()
-    for pod in pods.items:
-        if query.lower() in pod.metadata.name.lower() or query.lower() in pod.metadata.namespace.lower():
-            results.append({
-                "type": "Pod",
-                "name": pod.metadata.name,
-                "namespace": pod.metadata.namespace,
-                "status": pod.status.phase
-            })
-
-    # Persistent Volume Claims
-    pvcs = core_api.list_persistent_volume_claim_for_all_namespaces()
-    for pvc in pvcs.items:
-        if query.lower() in pvc.metadata.name.lower():
-            results.append({
-                "type": "Persistent Volume Claim",
-                "name": pvc.metadata.name,
-                "namespace": pvc.metadata.namespace,
-                "status": pvc.status.phase
-            })
-
-    # ConfigMaps
-    configmaps = core_api.list_config_map_for_all_namespaces()
-    for cm in configmaps.items:
-        if query.lower() in cm.metadata.name.lower():
-            results.append({
-                "type": "ConfigMap",
-                "name": cm.metadata.name,
-                "namespace": cm.metadata.namespace,
-                "status": "Available"
-            })
-
-    # Deployments
-    deployments = apps_api.list_deployment_for_all_namespaces()
-    for deployment in deployments.items:
-        if query.lower() in deployment.metadata.name.lower() or query.lower() in deployment.metadata.namespace.lower():
-            results.append({
-                "type": "Deployment",
-                "name": deployment.metadata.name,
-                "namespace": deployment.metadata.namespace,
-                "status": f"Replicas: {deployment.spec.replicas}"
-            })
-
-    # StatefulSets
-    statefulsets = apps_api.list_stateful_set_for_all_namespaces()
-    for ss in statefulsets.items:
-        if query.lower() in ss.metadata.name.lower():
-            results.append({
-                "type": "StatefulSet",
-                "name": ss.metadata.name,
-                "namespace": ss.metadata.namespace,
-                "status": f"Replicas: {ss.spec.replicas}"
-            })
-
-    # DaemonSets
-    daemonsets = apps_api.list_daemon_set_for_all_namespaces()
-    for ds in daemonsets.items:
-        if query.lower() in ds.metadata.name.lower():
-            results.append({
-                "type": "DaemonSet",
-                "name": ds.metadata.name,
-                "namespace": ds.metadata.namespace,
-                "status": f"Desired: {ds.status.desired_number_scheduled}"
-            })
-
-    return results
-
-if __name__ == "__main__":
-    logger.info("Testing logging in k8s_client.py")
-    search_kubernetes_resources('kubefun')
-
+def get_namespace_details(namespace_name):
+    """
+    Retrieve detailed information about a specific namespace.
+    """
+    core_api = client.CoreV1Api()
+    namespace = core_api.read_namespace(name=namespace_name)
+    return namespace.to_dict()  # Convert the object to a dictionary for easier display

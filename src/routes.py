@@ -1,6 +1,8 @@
 from flask import render_template, request
-from .k8s_client import get_nodes, get_pods, search_kubernetes_resources
-from .k8s_client import get_namespaces_with_counts, get_cluster_info
+from .k8s_client import search_nodes, search_pods, search_secrets, search_services
+from .k8s_client import get_nodes, get_pods, get_secrets, get_services
+
+from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
 from .k8s_client import get_node_details, get_namespace_details
 
