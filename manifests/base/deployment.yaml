@@ -22,4 +22,4 @@ spec:
             - containerPort: 5000
           envFrom:
             - secretRef:
-                name: kubefunb-aws-env
+                name: kubefun-aws-env
