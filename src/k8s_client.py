@@ -37,22 +37,75 @@ def search_nodes(query):
 
 # Pod Functions
 def get_pods(namespace=None):
-    """Retrieve pods from Kubernetes."""
+    """Retrieve pods from Kubernetes with desired and ready replicas."""
     core_api = client.CoreV1Api()
+    apps_api = client.AppsV1Api()
+
+    # Fetch Pods
     if namespace:
         pods = core_api.list_namespaced_pod(namespace)
     else:
         pods = core_api.list_pod_for_all_namespaces()
 
-    return [
-        {
+    # Fetch higher-level controllers (ReplicaSets, Deployments, StatefulSets)
+    replica_sets = apps_api.list_replica_set_for_all_namespaces()
+    deployments = apps_api.list_deployment_for_all_namespaces()
+    stateful_sets = apps_api.list_stateful_set_for_all_namespaces()
+
+    # Build mappings for replicas
+    desired_ready_mapping = {}
+
+    # Add ReplicaSets
+    for rs in replica_sets.items:
+        desired_ready_mapping[rs.metadata.name] = {
+            "desired": rs.spec.replicas or 0,
+            "ready": rs.status.ready_replicas or 0
+        }
+
+    # Add Deployments
+    for deploy in deployments.items:
+        desired_ready_mapping[deploy.metadata.name] = {
+            "desired": deploy.spec.replicas or 0,
+            "ready": deploy.status.ready_replicas or 0
+        }
+
+    # Add StatefulSets
+    for sts in stateful_sets.items:
+        desired_ready_mapping[sts.metadata.name] = {
+            "desired": sts.spec.replicas or 0,
+            "ready": sts.status.ready_replicas or 0
+        }
+
+    # Match Pods to their controllers
+    pod_data = []
+    for pod in pods.items:
+        controller_name = None
+        desired_replicas = "N/A"
+        ready_replicas = "N/A"
+
+        # Identify the controller
+        for owner in pod.metadata.owner_references or []:
+            if owner.kind in ["ReplicaSet", "StatefulSet"]:
+                controller_name = owner.name
+                break
+
+        # Lookup the controller's replica counts
+        if controller_name and controller_name in desired_ready_mapping:
+            desired_replicas = desired_ready_mapping[controller_name]["desired"]
+            ready_replicas = desired_ready_mapping[controller_name]["ready"]
+
+        # Add pod data
+        pod_data.append({
             "type": "Pod",
             "name": pod.metadata.name,
             "namespace": pod.metadata.namespace,
-            "status": pod.status.phase
-        }
-        for pod in pods.items
-    ]
+            "status": pod.status.phase,
+            "desired_replicas": desired_replicas,
+            "ready_replicas": ready_replicas
+        })
+
+    return pod_data
+
 
 def search_pods(query, namespace=None):
     """Search pods by name or namespace."""
