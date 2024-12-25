@@ -140,6 +140,93 @@ def search_services(query, namespace=None):
         if query.lower() in service["name"].lower() or query.lower() in service["namespace"].lower()
     ]
 
+# CRDs
+def get_crds():
+    """Retrieve all CustomResourceDefinitions (CRDs) from Kubernetes."""
+    api_ext = client.ApiextensionsV1Api()
+    try:
+        crds = api_ext.list_custom_resource_definition()
+        return [
+            {
+                "name": crd.metadata.name,
+                "group": crd.spec.group,
+                "version": crd.spec.versions[0].name if crd.spec.versions else "N/A",
+                "scope": crd.spec.scope,
+                "type": crd.spec.names.kind,
+            }
+            for crd in crds.items
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching CRDs: {e}")
+        return []
+    
+def search_crds(query):
+    """Search CRDs by name or other fields."""
+    crds = get_crds()
+    return [
+        crd
+        for crd in crds
+        if query.lower() in crd["name"].lower()
+           or query.lower() in crd["group"].lower()
+           or query.lower() in crd["type"].lower()
+    ]
+
+# Cluster Roles
+def get_clusterroles():
+    """Retrieve all ClusterRoles in the cluster."""
+    rbac_api = client.RbacAuthorizationV1Api()
+    try:
+        clusterroles = rbac_api.list_cluster_role()
+        return [
+            {
+                "type": "Cluster Role",
+                "name": role.metadata.name,
+                "creation_timestamp": role.metadata.creation_timestamp,
+                "rules_count": len(role.rules) if role.rules else 0,
+            }
+            for role in clusterroles.items
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching ClusterRoles: {e}")
+        return []
+
+def search_clusterroles(query):
+    """Search ClusterRoles by name."""
+    clusterroles = get_clusterroles()
+    return [
+        role
+        for role in clusterroles
+        if query.lower() in role["name"].lower()
+    ]
+
+# Cluster Role Bindings
+def get_clusterrolebindings():
+    """Retrieve all ClusterRoleBindings in the cluster."""
+    rbac_api = client.RbacAuthorizationV1Api()
+    try:
+        clusterrolebindings = rbac_api.list_cluster_role_binding()
+        return [
+            {
+                "type": "Cluster Role Binding",
+                "name": binding.metadata.name,
+                "role_ref": binding.role_ref.name,
+                "subjects_count": len(binding.subjects) if binding.subjects else 0,
+            }
+            for binding in clusterrolebindings.items
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching ClusterRoleBindings: {e}")
+        return []
+
+def search_clusterrolebindings(query):
+    """Search ClusterRoleBindings by name or referenced role."""
+    clusterrolebindings = get_clusterrolebindings()
+    return [
+        binding
+        for binding in clusterrolebindings
+        if query.lower() in binding["name"].lower() or query.lower() in binding["role_ref"].lower()
+    ]
+
 # Secrets Functions
 def get_secrets(namespace=None):
     """Retrieve secrets from Kubernetes."""
@@ -261,7 +348,9 @@ def search_kubernetes_resources(query):
     results.extend(search_persistent_volumes(query))
     results.extend(search_persistent_volume_claims(query))
     results.extend(search_storage_classes(query))
-
+    results.extend(search_crds(query))
+    results.extend(search_clusterroles(query))  
+    results.extend(search_clusterrolebindings(query))  
 
     logger.info(f"Global search completed. Found {len(results)} matching resources.")
     return results
