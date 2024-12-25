@@ -63,7 +63,9 @@ def init_routes(app):
 
     @app.route('/apps')
     def apps():
-        return render_template("apps.html")
+        """Render the Services page."""
+        services_list = get_services()
+        return render_template("apps.html", services=services_list)
 
     @app.route('/about')
     def about():

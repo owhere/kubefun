@@ -124,12 +124,15 @@ def get_services(namespace=None):
 
     return [
         {
-            "type": "Service",
-            "name": service.metadata.name,
-            "namespace": service.metadata.namespace,
-            "status": "Available"  # Services generally don't have a status like pods
+            "name": svc.metadata.name,
+            "namespace": svc.metadata.namespace,
+            "type": svc.spec.type if svc.spec.type else "Unknown",
+            "cluster_ip": svc.spec.cluster_ip if svc.spec.cluster_ip else "None",
+            "ports": [
+                     f"{port.port}/{port.protocol}" for port in (svc.spec.ports or [])
+                     ],
         }
-        for service in services.items
+        for svc in services.items
     ]
 
 def search_services(query, namespace=None):

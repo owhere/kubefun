@@ -1,7 +1,38 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Cluster Resources</h2>
+<h2>Cluster Services</h2>
 
-<h3>Apps</h3>
+<table id="servicesTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Type</th>
+            <th>Cluster IP</th>
+            <th>Ports</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for service in services %}
+        <tr>
+            <td>{{ service.name }}</td>
+            <td>{{ service.namespace }}</td>
+            <td>{{ service.type }}</td>
+            <td>{{ service.cluster_ip }}</td>
+            <td>{{ ", ".join(service.ports) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
+<!-- Initialize DataTables -->
+<script>
+    $(document).ready(function() {
+        $('#servicesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
 {% endblock %}
