@@ -18,7 +18,7 @@
             <td><a href="{{ url_for('namespace_detail', namespace_name=namespace.name) }}">{{ namespace.name }}</a></td>
             <td>{{ namespace.status }}</td>
             <td><a href="{{ url_for('pods', namespace=namespace.name) }}">{{ namespace.pods }}</a></td>
-            <td>{{ namespace.deployments }}</td>
+            <td><a href="{{ url_for('deployments', namespace=namespace.name) }}">{{ namespace.deployments }}</a></td>
             <td>{{ namespace.services }}</td>
             <td>{{ namespace.secrets }}</td>
         </tr>

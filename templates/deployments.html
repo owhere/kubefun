@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Deployments{% if namespace %} in Namespace: {{ namespace }}{% endif %}</h2>
+
+<!-- Namespace Filter -->
+<form method="get" action="{{ url_for('deployments') }}" class="w3-margin-bottom">
+    <label for="namespace">Filter by Namespace:</label>
+    <input type="text" id="namespace" name="namespace" value="{{ namespace }}" placeholder="Enter namespace">
+    <button type="submit" class="w3-button w3-blue">Filter</button>
+    {% if namespace %}
+        <a href="{{ url_for('deployments') }}" class="w3-button w3-gray">Clear Filter</a>
+    {% endif %}
+</form>
+
+<!-- Pods Table -->
+<table id="deploymentsTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Replicas</th>
+            <th>Ready Replicas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dep in deployments %}
+        <tr>
+            <td>{{ dep.name }}</td>
+            <td>{{ dep.namespace }}</td>
+            <td>{{ dep.replicas}}</td>
+            <td>{{ dep.ready_replicas}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Initialize DataTables -->
+<script>
+    $(document).ready(function() {
+        $('#podsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
+{% endblock %}

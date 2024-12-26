@@ -1,6 +1,6 @@
 from flask import render_template, request
 from .k8s_client import search_nodes, search_pods, search_secrets, search_services
-from .k8s_client import get_nodes, get_pods, get_secrets, get_services
+from .k8s_client import get_nodes, get_pods, get_secrets, get_services, get_deployments
 
 from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
@@ -23,6 +23,13 @@ def init_routes(app):
     def namespaces():
         namespaces = get_namespaces_with_counts()
         return render_template('namespaces.html', namespaces=namespaces)
+
+    @app.route('/deployments')
+    def deployments():
+        """Display deployments, optionally filtered by namespace."""
+        namespace = request.args.get('namespace')  
+        deployments = get_deployments(namespace)
+        return render_template('deployments.html', deployments=deployments, namespace=namespace)
 
     @app.route('/pods')
     def pods():
