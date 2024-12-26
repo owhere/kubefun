@@ -426,6 +426,7 @@ def get_namespaces_with_counts():
     pods = get_pods()
     deployments = get_deployments()
     services = get_services()
+    secrets = get_secrets()
 
     # Aggregate counts
     for ns in namespaces:
@@ -435,13 +436,15 @@ def get_namespaces_with_counts():
         pod_count = len([p for p in pods if p["namespace"] == ns_name])
         deployment_count = len([d for d in deployments if d["namespace"] == ns_name])
         service_count = len([s for s in services if s["namespace"] == ns_name])
+        secrets_count = len([s for s in secrets if s["namespace"] == ns_name])
 
         namespace_data.append({
             "name": ns_name,
             "status": "Active" if not ns["status"] else ns["status"],
             "pods": pod_count,
             "deployments": deployment_count,
-            "services": service_count
+            "services": service_count,
+            "secrets": secrets_count
         })
 
     return namespace_data

@@ -26,8 +26,10 @@ def init_routes(app):
 
     @app.route('/pods')
     def pods():
-        pods = get_pods()
-        return render_template("pods.html", pods=pods)
+        """Display Pods, optionally filtered by namespace."""
+        namespace = request.args.get('namespace')  
+        pods = get_pods(namespace)  
+        return render_template("pods.html", pods=pods, namespace=namespace)
 
     @app.route('/search')
     def search():
