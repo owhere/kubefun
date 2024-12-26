@@ -3,6 +3,16 @@
 {% block content %}
 <h2>Cluster Services</h2>
 
+<!-- Namespace Filter -->
+<form method="get" action="{{ url_for('services') }}" class="w3-margin-bottom">
+    <label for="namespace">Filter by Namespace:</label>
+    <input type="text" id="namespace" name="namespace" value="{{ namespace }}" placeholder="Enter namespace">
+    <button type="submit" class="w3-button w3-blue">Filter</button>
+    {% if namespace %}
+    <a href="{{ url_for('services') }}" class="w3-button w3-gray">Clear Filter</a>
+    {% endif %}
+</form>
+
 <table id="servicesTable" class="dataTable">
     <thead>
         <tr>

@@ -74,11 +74,12 @@ def init_routes(app):
         return render_template('details.html', resource_name=namespace_name, resource_type="Namespace", details=namespace_details)
 
 
-    @app.route('/apps')
-    def apps():
-        """Render the Services page."""
-        services_list = get_services()
-        return render_template("apps.html", services=services_list)
+    @app.route('/services')
+    def services():
+        """Display Services, optionally filtered by namespace."""
+        namespace = request.args.get('namespace')  
+        services_list = get_services(namespace)
+        return render_template("services.html", services=services_list, namespace=namespace)
 
     @app.route('/about')
     def about():
