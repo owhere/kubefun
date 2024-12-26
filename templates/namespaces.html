@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Namespaces</h2>
+<table id="namespacesTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Pods</th>
+            <th>Deployments</th>
+            <th>Services</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for namespace in namespaces %}
+        <tr>
+            <td><a href="{{ url_for('namespace_detail', namespace_name=namespace.name) }}">{{ namespace.name }}</a></td>
+            <td>{{ namespace.status }}</td>
+            <td>{{ namespace.pods }}</td>
+            <td>{{ namespace.deployments }}</td>
+            <td>{{ namespace.services }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- DataTables Initialization -->
+<script>
+    $(document).ready(function() {
+        $('#nodesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#namespacesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+    });
+</script>
+{% endblock %}

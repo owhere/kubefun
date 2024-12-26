@@ -14,11 +14,15 @@ def init_routes(app):
         cluster_info = get_cluster_info()
         return render_template("welcome.html", cluster_info=cluster_info)
     
-    @app.route('/kube')
-    def kube():
+    @app.route('/nodes')
+    def nodes():
         nodes = get_nodes()
+        return render_template('nodes.html', nodes=nodes)
+    
+    @app.route('/namespaces')
+    def namespaces():
         namespaces = get_namespaces_with_counts()
-        return render_template('kube.html', nodes=nodes, namespaces=namespaces)
+        return render_template('namespaces.html', namespaces=namespaces)
 
     @app.route('/pods')
     def pods():
