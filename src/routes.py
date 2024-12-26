@@ -81,6 +81,13 @@ def init_routes(app):
         services_list = get_services(namespace)
         return render_template("services.html", services=services_list, namespace=namespace)
 
+    @app.route('/secrets')
+    def secrets():
+        """Display Secrets, optionally filtered by namespace."""
+        namespace = request.args.get('namespace')  
+        secrets_list = get_secrets(namespace)
+        return render_template("secrets.html", secrets=secrets_list, namespace=namespace )
+
     @app.route('/about')
     def about():
         return render_template("about.html")

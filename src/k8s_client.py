@@ -294,7 +294,6 @@ def get_secrets(namespace=None):
 
     return [
         {
-            "type": "Secret",
             "name": secret.metadata.name,
             "namespace": secret.metadata.namespace,
             "type": secret.type

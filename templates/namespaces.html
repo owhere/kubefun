@@ -20,7 +20,7 @@
             <td><a href="{{ url_for('pods', namespace=namespace.name) }}">{{ namespace.pods }}</a></td>
             <td><a href="{{ url_for('deployments', namespace=namespace.name) }}">{{ namespace.deployments }}</a></td>
             <td><a href="{{ url_for('services', namespace=namespace.name) }}">{{ namespace.services }}</a></td>
-            <td>{{ namespace.secrets }}</td>
+            <td><a href="{{ url_for('secrets', namespace=namespace.name) }}">{{ namespace.secrets }}</a></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -29,10 +29,6 @@
 <!-- DataTables Initialization -->
 <script>
     $(document).ready(function() {
-        $('#nodesTable').DataTable({
-            "autoWidth": false,
-            "responsive": true
-        });
         $('#namespacesTable').DataTable({
             "autoWidth": false,
             "responsive": true
