@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Service: {{ service.metadata.name }}</h2>
+<p><strong>Namespace:</strong> {{ service.metadata.namespace }}</p>
+<p><strong>Type:</strong> {{ service.spec.type }}</p>
+<p><strong>Cluster IP:</strong> {{ service.spec.cluster_ip }}</p>
+<p><strong>External IP:</strong> {{ service.status.load_balancer.ingress[0].ip if service.status.load_balancer.ingress else "None" }}</p>
+<p><strong>Ports:</strong></p>
+<ul>
+    {% for port in service.spec.ports %}
+    <li>{{ port.port }}/{{ port.protocol }} (Target: {{ port.target_port }})</li>
+    {% endfor %}
+</ul>
+<p><strong>Selectors:</strong> {{ service.spec.selector }}</p>
+<p><strong>Creation Timestamp:</strong> {{ service.metadata.creation_timestamp }}</p>
+
+<h3>Endpoints</h3>
+<ul>
+    {% if service.subsets %}
+        {% for subset in service.subsets %}
+        <li>{{ subset.addresses | join(', ') }}</li>
+        {% endfor %}
+    {% else %}
+        <li>No endpoints available.</li>
+    {% endif %}
+</ul>
+
+<h3>Description</h3>
+
+<div class="w3-card w3-padding">
+    <!-- Preformatted block for the JSON content -->
+    <pre><code class="language-json">{{ service | tojson(indent=2) | safe }}</code></pre>
+</div>
+
+{% endblock %}

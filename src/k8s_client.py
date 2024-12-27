@@ -567,3 +567,14 @@ def get_pod_events(namespace, pod_name):
     except client.exceptions.ApiException as e:
         logger.error(f"Failed to fetch events for pod {pod_name}: {e}")
         return []
+
+def get_service_details(namespace, service_name):
+    """
+    Retrieve detailed information about a specific service.
+    """
+    try:
+        core_api = client.CoreV1Api()
+        service = core_api.read_namespaced_service(name=service_name, namespace=namespace)
+        return service.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch service details: {e}"}
