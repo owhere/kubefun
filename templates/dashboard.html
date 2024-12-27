@@ -17,6 +17,7 @@
             {{ cluster_info.healthy_nodes }} / {{ cluster_info.total_nodes }}
         </span> 
     </p>
+    <p style="margin: 0;">Total Namespaces: <strong>{{ cluster_info.total_namespaces }}</strong></p>
     <p style="margin: 0;">Total Pods: <strong>{{ cluster_info.total_pods }}</strong></p>
     <p style="margin: 0;">Total Deployments:<strong>{{ cluster_info.total_deployments }}</strong></p>
     <p style="margin: 0;">Total Services: <strong>{{ cluster_info.total_services }}</strong></p>
