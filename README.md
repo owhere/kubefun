@@ -75,9 +75,14 @@ Kubefun is a lightweight and intuitive Kubernetes resource explorer that provide
 
 ## Screenshots
 
-Here’s a preview of Kubefun in action:
+Here’s a preview of Kubefun in global search:
 
-![Screenshot](static/images/screenshot.png)
+![Screenshot](static/images/kubefun.png)
+
+Here’s a preview of Kubefun in overview of resources in namespaces:
+
+![Screenshot](static/images/kubefun-ns.png)
+
 
 ---
 
