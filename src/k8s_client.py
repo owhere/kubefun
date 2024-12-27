@@ -578,3 +578,29 @@ def get_service_details(namespace, service_name):
         return service.to_dict()
     except client.exceptions.ApiException as e:
         return {"error": f"Failed to fetch service details: {e}"}
+    
+import base64
+
+def get_secret_details(namespace, secret_name):
+    """
+    Retrieve detailed information about a specific secret.
+    """
+    try:
+        core_api = client.CoreV1Api()
+        secret = core_api.read_namespaced_secret(name=secret_name, namespace=namespace)
+
+        # Decode the secret data
+        secret_data = {
+            key: base64.b64decode(value).decode("utf-8")
+            for key, value in (secret.data or {}).items()
+        }
+
+        return {
+            "name": secret.metadata.name,
+            "namespace": secret.metadata.namespace,
+            "type": secret.type,
+            "data": secret_data,
+            "creation_timestamp": secret.metadata.creation_timestamp,
+        }
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch secret details: {e}"}
