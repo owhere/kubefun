@@ -25,7 +25,7 @@
     <tbody>
         {% for pod in pods %}
         <tr>
-            <td>{{ pod.name }}</td>
+            <td><a href="{{ url_for('pod_details', namespace=pod.namespace, pod_name=pod.name) }}">{{ pod.name }}</a></td>
             <td>{{ pod.namespace }}</td>
             <td>{{ pod.status }}</td>
         </tr>

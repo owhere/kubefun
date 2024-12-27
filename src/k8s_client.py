@@ -534,12 +534,6 @@ def get_deployment_details(namespace, deployment_name):
     Retrieve detailed information about a specific deployment.
     """
     try:
-        # Load Kubernetes configuration
-        try:
-            config.load_kube_config()
-        except Exception:
-            config.load_incluster_config()
-
         apps_api = client.AppsV1Api()
         deployment = apps_api.read_namespaced_deployment(name=deployment_name, namespace=namespace)
 
@@ -547,3 +541,29 @@ def get_deployment_details(namespace, deployment_name):
         return deployment.to_dict()
     except client.exceptions.ApiException as e:
         return {"error": f"Failed to fetch deployment details: {e}"}
+    
+def get_pod_details(namespace, pod_name):
+    """
+    Retrieve detailed information about a specific pod.
+    """
+    try:
+        core_api = client.CoreV1Api()
+        pod = core_api.read_namespaced_pod(name=pod_name, namespace=namespace)
+        events = core_api.list_namespaced_event(namespace=namespace, field_selector=f"involvedObject.name={pod_name}")
+        # Return the raw pod object as a dictionary
+        return pod.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch pod details: {e}"}
+    
+def get_pod_events(namespace, pod_name):
+    """
+    Retrieve events for a specific pod.
+    """
+    try:
+        core_api = client.CoreV1Api()
+        events = core_api.list_namespaced_event(namespace=namespace, field_selector=f"involvedObject.name={pod_name}")
+        logger.info(f"Fetched {len(events.items)} events in namespace: {namespace}")
+        return [event.to_dict() for event in events.items]
+    except client.exceptions.ApiException as e:
+        logger.error(f"Failed to fetch events for pod {pod_name}: {e}")
+        return []

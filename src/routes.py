@@ -4,7 +4,7 @@ from .k8s_client import get_nodes, get_pods, get_secrets, get_services, get_depl
 
 from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
-from .k8s_client import get_node_details, get_namespace_details, get_deployment_details
+from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -80,6 +80,15 @@ def init_routes(app):
         if "error" in details:
             return details["error"], 400
         return render_template("deployment_details.html", deployment=details)
+
+    @app.route("/pod/<namespace>/<pod_name>")
+    def pod_details(namespace, pod_name):
+        """Render pod details."""
+        details = get_pod_details(namespace, pod_name)
+        events = get_pod_events(namespace, pod_name)
+        if "error" in details:
+            return details["error"], 400
+        return render_template("pod_details.html", pod=details, events=events)
 
     @app.route('/services')
     def services():

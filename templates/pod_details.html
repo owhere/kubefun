@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Deployment: {{ deployment.metadata.name }}</h2>
-<p><strong>Namespace:</strong> {{ deployment.metadata.namespace }}</p>
-<p><strong>Replicas:</strong> {{ deployment.spec.replicas }}</p>
-<p><strong>Ready Replicas:</strong> {{ deployment.status.ready_replicas }}</p>
-<p><strong>Strategy:</strong> {{ deployment.spec.strategy.type }}</p>
-<p><strong>Labels:</strong> {{ deployment.metadata.labels }}</p>
-<p><strong>Selector:</strong> {{ deployment.spec.selector.match_labels }}</p>
-<p><strong>Creation Timestamp:</strong> {{ deployment.metadata.creation_timestamp }}</p>
+<h2>Pod: {{ pod.metadata.name }}</h2>
+<p><strong>Namespace:</strong> {{ pod.metadata.namespace }}</p>
+<p><strong>Status:</strong> {{ pod.status.phase }}</p>
+<p><strong>Node:</strong> {{ pod.spec.node_name }}</p>
+<p><strong>IP:</strong> {{ pod.status.pod_ip }}</p>
+<p><strong>Labels:</strong> {{ pod.metadata.labels }}</p>
+<p><strong>Creation Timestamp:</strong> {{ pod.metadata.creation_timestamp }}</p>
 
 <h3>Containers</h3>
 <table class="w3-table w3-bordered w3-striped">
@@ -17,29 +16,45 @@
             <th>Name</th>
             <th>Image</th>
             <th>Ports</th>
+            <th>Ready</th>
         </tr>
     </thead>
     <tbody>
-        {% for container in deployment.spec.template.spec.containers %}
+        {% for container in pod.spec.containers %}
         <tr>
             <td>{{ container.name }}</td>
             <td>{{ container.image }}</td>
-            <td>{% if container.ports%}
+            <td>
+                {% if container.ports %}
                     {% for port in container.ports %}
                         {{ port.container_port }}/{{ port.protocol }}
                     {% endfor %}
-                {% endif  %}
+                {% endif %}
+            </td>
+            <td>
+                {% if container.ready %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
+<h3>Events</h3>
+<ul>
+    {% for event in events %}
+    <li>{{ event.message }}</li>
+    {% endfor %}
+</ul>
+
 <h3>Description</h3>
 
 <div class="w3-card w3-padding">
     <!-- Preformatted block for the JSON content -->
-    <pre><code class="language-json">{{ deployment | tojson(indent=2) | safe }}</code></pre>
+    <pre><code class="language-json">{{ pod | tojson(indent=2) | safe }}</code></pre>
 </div>
 
 <!-- Include Prism.js library for syntax highlighting -->
