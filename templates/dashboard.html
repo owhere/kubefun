@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Cluster Information Section -->
+<div class="w3-card w3-padding w3-margin-bottom" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <p style="margin: 0;"><strong>Cluster Name:</strong> {{ cluster_info.cluster_name }}</p>
+    <p style="margin: 0;"><strong>API Server:</strong> {{ cluster_info.api_server }}</p>
+    <p style="margin: 0;"><strong>Health Status:</strong> 
+        <span class="w3-tag w3-round {% if cluster_info.health_status == 'Healthy' %}w3-green{% else %}w3-red{% endif %}">
+            {{ cluster_info.health_status }}
+        </span>
+    </p>
+</div>
+<div class="w3-card w3-padding w3-margin-bottom" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <p style="margin: 0;"><strong>Total Nodes:</strong> 
+        <span class="{% if cluster_info.healthy_nodes == cluster_info.total_nodes %}w3-green{% else %}w3-red{% endif %}">
+            {{ cluster_info.healthy_nodes }} / {{ cluster_info.total_nodes }}
+        </span> 
+    </p>
+    <p style="margin: 0;">Total Pods: <strong>{{ cluster_info.total_pods }}</strong></p>
+    <p style="margin: 0;">Total Deployments:<strong>{{ cluster_info.total_deployments }}</strong></p>
+    <p style="margin: 0;">Total Services: <strong>{{ cluster_info.total_services }}</strong></p>
+</div>
+
+{% endblock %}

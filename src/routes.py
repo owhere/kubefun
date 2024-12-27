@@ -13,6 +13,11 @@ def init_routes(app):
         cluster_info = get_cluster_info()
         return render_template("welcome.html", cluster_info=cluster_info)
     
+    @app.route('/dashboard')
+    def dashboard():
+        cluster_info = get_cluster_info()
+        return render_template("dashboard.html", cluster_info=cluster_info)
+    
     @app.route('/nodes')
     def nodes():
         nodes = get_nodes()
