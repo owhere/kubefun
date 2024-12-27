@@ -26,7 +26,7 @@
     <tbody>
         {% for dep in deployments %}
         <tr>
-            <td>{{ dep.name }}</td>
+            <td><a href="{{ url_for('deployment_details', namespace=dep.namespace, deployment_name=dep.name) }}">{{ dep.name }}</a></td>
             <td>{{ dep.namespace }}</td>
             <td>{{ dep.replicas}}</td>
             <td>{{ dep.ready_replicas}}</td>

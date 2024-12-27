@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Deployment: {{ deployment.metadata.name }}</h2>
+<p><strong>Namespace:</strong> {{ deployment.metadata.namespace }}</p>
+<p><strong>Replicas:</strong> {{ deployment.spec.replicas }}</p>
+<p><strong>Ready Replicas:</strong> {{ deployment.status.ready_replicas }}</p>
+<p><strong>Strategy:</strong> {{ deployment.spec.strategy.type }}</p>
+<p><strong>Labels:</strong> {{ deployment.metadata.labels }}</p>
+<p><strong>Selector:</strong> {{ deployment.spec.selector.match_labels }}</p>
+<p><strong>Creation Timestamp:</strong> {{ deployment.metadata.creation_timestamp }}</p>
+
+<h3>Containers</h3>
+<table class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Image</th>
+            <th>Ports</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for container in deployment.spec.template.spec.containers %}
+        <tr>
+            <td>{{ container.name }}</td>
+            <td>{{ container.image }}</td>
+            <td>{% if container.ports%}
+                    {% for port in container.ports %}
+                        {{ port.container_port }}/{{ port.protocol }}
+                    {% endfor %}
+                {% endif  %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="w3-card w3-padding">
+    <!-- Preformatted block for the JSON content -->
+    <pre><code class="language-json">{{ deployment | tojson(indent=2) | safe }}</code></pre>
+</div>
+
+<!-- Include Prism.js library for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+{% endblock %}

@@ -519,7 +519,7 @@ def get_node_details(node_name):
     """
     core_api = client.CoreV1Api()
     node = core_api.read_node(name=node_name)
-    return node.to_dict()  # Convert the object to a dictionary for easier display
+    return node.to_dict()  
 
 def get_namespace_details(namespace_name):
     """
@@ -527,4 +527,23 @@ def get_namespace_details(namespace_name):
     """
     core_api = client.CoreV1Api()
     namespace = core_api.read_namespace(name=namespace_name)
-    return namespace.to_dict()  # Convert the object to a dictionary for easier display
+    return namespace.to_dict()  
+
+def get_deployment_details(namespace, deployment_name):
+    """
+    Retrieve detailed information about a specific deployment.
+    """
+    try:
+        # Load Kubernetes configuration
+        try:
+            config.load_kube_config()
+        except Exception:
+            config.load_incluster_config()
+
+        apps_api = client.AppsV1Api()
+        deployment = apps_api.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+
+        # Return the raw deployment object as a dictionary
+        return deployment.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch deployment details: {e}"}
