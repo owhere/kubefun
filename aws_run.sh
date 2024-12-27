@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# docker built -t kubefun .
+# docker build -t kubefun .
 
 docker run -d -p 39027:5000 \
   -e AWS_PROFILE=default \
