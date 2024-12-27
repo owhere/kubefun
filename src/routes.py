@@ -3,7 +3,7 @@ from .k8s_client import get_nodes, get_pods, get_secrets, get_services, get_depl
 from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
 from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events
-from .k8s_client import get_service_details, get_secret_details
+from .k8s_client import get_service_details, get_secret_details, get_storageclass_details
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -117,7 +117,16 @@ def init_routes(app):
         if "error" in details:
             return details["error"], 400
         return render_template("secret_details.html", secret=details)
+    
+    @app.route("/storageclass/<storageclass_name>")
+    def storageclass_details(storageclass_name):
+        """Render storageclass details."""
+        details = get_storageclass_details(storageclass_name)
+        if "error" in details:
+            return details["error"], 400
+        return render_template("storageclass_details.html", storageclass=details)
 
     @app.route('/about')
     def about():
         return render_template("about.html")
+    

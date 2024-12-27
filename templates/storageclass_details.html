@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>StorageClass: {{ storageclass.metadata.name }}</h2>
+<p><strong>Provisioner:</strong> {{ storageclass.provisioner }}</p>
+<p><strong>Reclaim Policy:</strong> {{ storageclass.reclaim_policy }}</p>
+<p><strong>Volume Binding Mode:</strong> {{ storageclass.volume_binding_mode }}</p>
+<p><strong>Allow Volume Expansion:</strong> {{ storageclass.allow_volume_expansion }}</p>
+<p><strong>Creation Timestamp:</strong> {{ storageclass.metadata.creation_timestamp }}</p>
+
+<h3>Parameters</h3>
+{% if storageclass.parameters %}
+<table class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key, value in storageclass.parameters.items() %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No parameters configured.</p>
+{% endif %}
+
+<h3>Annotations</h3>
+{% if storageclass.metadata.annotations %}
+<table class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key, value in storageclass.metadata.annotations.items() %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No annotations available.</p>
+{% endif %}
+
+{% endblock %}

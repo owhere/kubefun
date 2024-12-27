@@ -604,3 +604,22 @@ def get_secret_details(namespace, secret_name):
         }
     except client.exceptions.ApiException as e:
         return {"error": f"Failed to fetch secret details: {e}"}
+
+def get_storageclass_details(storageclass_name):
+    """
+    Retrieve detailed information about a specific StorageClass.
+    """
+    try:
+        # Load Kubernetes configuration
+        try:
+            config.load_kube_config()
+        except Exception:
+            config.load_incluster_config()
+
+        storage_api = client.StorageV1Api()
+        storageclass = storage_api.read_storage_class(name=storageclass_name)
+
+        # Convert the StorageClass object to a dictionary
+        return storageclass.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch StorageClass details: {e}"}
