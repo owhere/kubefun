@@ -1,7 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>About Kubefun</h2>
+<p>
+    Kubefun is an intuitive web-based Kubernetes explorer designed to help you navigate and understand your cluster's resources and their relationships. 
+    With Kubefun, you can easily search for any keyword and uncover related resources in your cluster, providing a comprehensive view of your Kubernetes environment.
+</p>
 
-<h3>Why kubefun</h3>
+<h3>Why Kubefun?</h3>
+<ul>
+    <li>
+        <strong>Efficient Search:</strong> Use the global search feature to find all resources linked to a keyword, such as namespaces, deployments, pods, services, cluster roles, secrets, and more.
+    </li>
+    <li>
+        <strong>Resource Insights:</strong> Dive deep into detailed views of resources like Pods, Deployments, Services, Secrets, StorageClasses, and CRDs.
+    </li>
+    <li>
+        <strong>Cluster Overview:</strong> Get a high-level summary of your cluster, including node health, resource counts, and namespace-level details.
+    </li>
+    <li>
+        <strong>Interactivity:</strong> Navigate through resources with hyperlinks for related resources, making exploration seamless and efficient.
+    </li>
+    <li>
+        <strong>User-Friendly:</strong> Designed with simplicity and functionality in mind, Kubefun is accessible for both Kubernetes newcomers and experts.
+    </li>
+</ul>
 
+<p>Here’s an example of Kubefun in action:</p>
+<img src="{{ url_for('static', filename='images/kubefun.png') }}" alt="Kubefun Screenshot" style="max-width: 100%; height: auto;">
+
+<h3>Resources</h3>
+<ul>
+    <li><strong>GitHub:</strong> <a href="https://github.com/owhere/kubefun" target="_blank">https://github.com/owhere/kubefun</a></li>
+    <li><strong>DockerHub:</strong> <a href="https://hub.docker.com/repository/docker/oxfordfun/kubefun/general" target="_blank">https://hub.docker.com/repository/docker/oxfordfun/kubefun/general</a></li>
+</ul>
+
+<h3>References</h3>
+<ul>
+    <li><a href="https://github.com/kubernetes-client/python" target="_blank">Kubernetes Python Client</a></li>
+    <li><a href="https://kubernetes.io/docs/reference/kubernetes-api/" target="_blank">Kubernetes API Reference</a></li>
+</ul>
 {% endblock %}
