@@ -54,16 +54,28 @@ Kubefun is a lightweight and intuitive Kubernetes resource explorer that provide
    ```
 
 2. **Deploy with `kubectl` and `kustomize`**:
-   - Navigate to the `manifests/overlays/dev` directory:
-     ```bash
-     cd manifests/overlays/dev
-     ```
+   # AWS EKS Deployment
 
-   - Apply the manifests:
-     ```bash
-     kubectl apply -k .
-     ```
+   - Create namespace kubefun
+   ```bash
+   kubectl create namespaces kubefun
+   ```
 
+   - Create secret with your credentials
+
+   ```bash
+   kubectl create secret generic kubefun-aws-env \
+      --from-literal=AWS_PROFILE=default \
+      --from-literal=AWS_SSO_SESSION=apps-k8s-dev \
+      -n kubefun
+   ```
+
+   - Deploy to dev
+
+   ```bash
+   kubectl apply -k overlays/dev
+   ```
+   
 3. **Access the application**:
    - If using a **LoadBalancer**, get the external IP:
      ```bash
