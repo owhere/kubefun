@@ -4,6 +4,7 @@ from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources,
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
 from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events
 from .k8s_client import get_service_details, get_secret_details, get_storageclass_details
+from .k8s_client import get_top_nodes, get_top_pods
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -16,7 +17,17 @@ def init_routes(app):
     @app.route('/dashboard')
     def dashboard():
         cluster_info = get_cluster_info()
-        return render_template("dashboard.html", cluster_info=cluster_info)
+
+        top_nodes = get_top_nodes()
+        top_pods = get_top_pods()
+
+        # Handle errors if metrics fetch fails
+        if isinstance(top_nodes, dict) and "error" in top_nodes:
+            return f"Error fetching node metrics: {top_nodes['error']}", 500
+        if isinstance(top_pods, dict) and "error" in top_pods:
+            return f"Error fetching pod metrics: {top_pods['error']}", 500
+
+        return render_template("dashboard.html", cluster_info=cluster_info, top_nodes=top_nodes, top_pods=top_pods)
     
     @app.route('/nodes')
     def nodes():

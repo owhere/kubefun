@@ -617,3 +617,152 @@ def get_storageclass_details(storageclass_name):
         return storageclass.to_dict()
     except client.exceptions.ApiException as e:
         return {"error": f"Failed to fetch StorageClass details: {e}"}
+
+def parse_cpu(value):
+    """
+    Parse CPU usage from Kubernetes (e.g., '3464u', '123456n') into cores.
+    """
+    if value.endswith("n"):  # Nanocores to cores
+        return int(value.strip("n")) / 1e9
+    elif value.endswith("u"):  # Microcores to cores
+        return int(value.strip("u")) / 1e6
+    elif value.endswith("m"):  # Millicores to cores
+        return int(value.strip("m")) / 1000
+    else:  # Assume already in cores
+        return float(value)
+
+
+def get_top_nodes():
+    """
+    Retrieve top nodes with CPU and Memory usage as percentages.
+    """
+    try:
+        # Fetch node metrics
+        custom_api = client.CustomObjectsApi()
+        metrics = custom_api.list_cluster_custom_object(
+            group="metrics.k8s.io",
+            version="v1beta1",
+            plural="nodes"
+        )
+
+        # Fetch node capacities
+        core_api = client.CoreV1Api()
+        nodes = core_api.list_node()
+
+        # Map node capacities
+        node_capacity = {
+            node.metadata.name: {
+                "cpu": node.status.capacity["cpu"],  # In cores
+                "memory": node.status.capacity["memory"],  # In Ki
+            }
+            for node in nodes.items
+        }
+
+        # Calculate usage percentages
+        top_nodes = []
+        for node in metrics["items"]:
+            name = node["metadata"]["name"]
+            cpu_usage = int(node["usage"]["cpu"].strip("n")) / 1e9  # Convert nanocores to cores
+            memory_usage = int(node["usage"]["memory"].strip("Ki"))  # Convert Ki to Mi for calculation
+
+            total_cpu = int(node_capacity[name]["cpu"])  # Total CPU in cores
+            total_memory = int(node_capacity[name]["memory"].strip("Ki"))  # Total Memory in Mi
+
+            top_nodes.append({
+                "name": name,
+                "cpu": f"{cpu_usage:.2f} cores ({(cpu_usage / total_cpu) * 100:.1f}%)",
+                "memory": f"{memory_usage} Mi ({(memory_usage / total_memory) * 100:.1f}%)"
+            })
+
+        return sorted(top_nodes, key=lambda x: x["cpu"], reverse=True)
+
+    except client.exceptions.ApiException as e:
+        logger.error(f"Metrics Server unavailable for nodes: {e}")
+        # Return fallback data
+        return [{"name": "N/A", "cpu": "N/A", "memory": "N/A"}]
+
+
+def parse_memory(value):
+    """
+    Parse memory values from Kubernetes (e.g., '256Mi', '2Gi') into Mi (Mebibytes).
+    """
+    if value.endswith("Mi"):
+        return int(value.strip("Mi"))
+    elif value.endswith("Gi"):
+        return int(value.strip("Gi")) * 1024
+    elif value.endswith("Ki"):
+        return int(value.strip("Ki")) // 1024
+    elif value.endswith("G"):
+        return int(value.strip("G")) * 1024  # Convert Gigabytes to MiB
+    elif value.endswith("M"):
+        return int(value.strip("M"))  # Assuming already in MiB
+    else:
+        # Default to Mi if no unit is provided
+        return int(value)
+
+def get_top_pods(namespace=None):
+    """
+    Retrieve top pods with CPU and Memory usage as percentages.
+    """
+    try:
+        # Fetch pod metrics
+        custom_api = client.CustomObjectsApi()
+        if namespace:
+            metrics = custom_api.list_namespaced_custom_object(
+                group="metrics.k8s.io",
+                version="v1beta1",
+                namespace=namespace,
+                plural="pods"
+            )
+        else:
+            metrics = custom_api.list_cluster_custom_object(
+                group="metrics.k8s.io",
+                version="v1beta1",
+                plural="pods"
+            )
+
+        # Fetch pod specifications
+        core_api = client.CoreV1Api()
+        pods = core_api.list_pod_for_all_namespaces() if not namespace else core_api.list_namespaced_pod(namespace)
+
+        # Map pod resource requests/limits
+        pod_resources = {
+            (pod.metadata.namespace, pod.metadata.name): {
+                "cpu": sum(
+                    int(container.resources.requests.get("cpu", "0").strip("m")) / 1000
+                    if container.resources and container.resources.requests else 0
+                    for container in pod.spec.containers
+                ),
+                "memory": sum(
+                    parse_memory(container.resources.requests.get("memory", "0Mi"))
+                    if container.resources and container.resources.requests else 0
+                    for container in pod.spec.containers
+                )
+            }
+            for pod in pods.items
+        }
+
+        # Calculate usage percentages
+        top_pods = []
+        for pod in metrics["items"]:
+            name = pod["metadata"]["name"]
+            namespace = pod["metadata"]["namespace"]
+
+            cpu_usage = sum(parse_cpu(container["usage"]["cpu"]) for container in pod["containers"])
+            memory_usage = sum(parse_memory(container["usage"]["memory"]) for container in pod["containers"])
+
+            total_cpu = pod_resources.get((namespace, name), {}).get("cpu", 1)
+            total_memory = pod_resources.get((namespace, name), {}).get("memory", 1)
+
+            top_pods.append({
+                "name": name,
+                "namespace": namespace,
+                "cpu": f"{cpu_usage:.2f} cores ({(cpu_usage / total_cpu) * 100:.1f}%)" if total_cpu > 0 else "N/A",
+                "memory": f"{memory_usage} Mi ({(memory_usage / total_memory) * 100:.1f}%)" if total_memory > 0 else "N/A"
+            })
+
+        return sorted(top_pods, key=lambda x: x["cpu"], reverse=True)
+    except client.exceptions.ApiException as e:
+        logger.error(f"Metrics Server unavailable for pods: {e}")
+        # Return fallback data
+        return [{"name": "N/A", "namespace": "N/A", "cpu": "N/A", "memory": "N/A"}]
