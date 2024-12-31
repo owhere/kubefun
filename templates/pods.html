@@ -33,13 +33,34 @@
     </tbody>
 </table>
 
+<h3>Top Pods by Resource Usage</h3>
+<table id="toppodsTable" class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Pod</th>
+            <th>Namespace</th>
+            <th>CPU Usage</th>
+            <th>Memory Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pod in top_pods %}
+        <tr>
+            <td>{{ pod.name }}</td>
+            <td>{{ pod.namespace }}</td>
+            <td>{{ pod.cpu }}</td>
+            <td>{{ pod.memory }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
 <!-- Initialize DataTables -->
 <script>
     $(document).ready(function() {
-        $('#podsTable').DataTable({
-            "autoWidth": false,
-            "responsive": true
-        });
+        $('#podsTable').DataTable();
+        $('#toppodsTable').DataTable();
     });
 </script>
 {% endblock %}

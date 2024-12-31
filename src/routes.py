@@ -18,21 +18,16 @@ def init_routes(app):
     def dashboard():
         cluster_info = get_cluster_info()
 
-        top_nodes = get_top_nodes()
-        top_pods = get_top_pods()
-
-        # Handle errors if metrics fetch fails
-        if isinstance(top_nodes, dict) and "error" in top_nodes:
-            return f"Error fetching node metrics: {top_nodes['error']}", 500
-        if isinstance(top_pods, dict) and "error" in top_pods:
-            return f"Error fetching pod metrics: {top_pods['error']}", 500
-
-        return render_template("dashboard.html", cluster_info=cluster_info, top_nodes=top_nodes, top_pods=top_pods)
+        return render_template("dashboard.html", cluster_info=cluster_info)
     
     @app.route('/nodes')
     def nodes():
         nodes = get_nodes()
-        return render_template('nodes.html', nodes=nodes)
+        top_nodes = get_top_nodes()
+        # Handle errors if metrics fetch fails
+        if isinstance(top_nodes, dict) and "error" in top_nodes:
+            return f"Error fetching node metrics: {top_nodes['error']}", 500
+        return render_template('nodes.html', nodes=nodes, top_nodes=top_nodes)
     
     @app.route('/namespaces')
     def namespaces():
@@ -51,7 +46,10 @@ def init_routes(app):
         """Display Pods, optionally filtered by namespace."""
         namespace = request.args.get('namespace')  
         pods = get_pods(namespace)  
-        return render_template("pods.html", pods=pods, namespace=namespace)
+        top_pods = get_top_pods()
+        if isinstance(top_pods, dict) and "error" in top_pods:
+            return f"Error fetching pod metrics: {top_pods['error']}", 500
+        return render_template("pods.html", pods=pods, namespace=namespace, top_pods=top_pods)
 
     @app.route('/search')
     def search():

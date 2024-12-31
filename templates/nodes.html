@@ -18,10 +18,34 @@
     </tbody>
 </table>
 
+<h3>Top Nodes by Resource Usage</h3>
+<table id="topnodesTable" class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Node</th>
+            <th>CPU Usage</th>
+            <th>Memory Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for node in top_nodes %}
+        <tr>
+            <td>{{ node.name }}</td>
+            <td>{{ node.cpu }}</td>
+            <td>{{ node.memory }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 <!-- DataTables Initialization -->
 <script>
     $(document).ready(function() {
         $('#nodesTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#topnodesTable').DataTable({
             "autoWidth": false,
             "responsive": true
         });
