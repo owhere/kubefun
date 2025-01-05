@@ -20,6 +20,34 @@
     </tbody>
 </table>
 
+<h3>Persistent Volume Claims and Persistent Volumes</h3>
+<table id="pvspvTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>PVC Name</th>
+            <th>PVC Namespace</th>
+            <th>PVC Status</th>
+            <th>PVC Capacity</th>
+            <th>PV Name</th>
+            <th>PV Status</th>
+            <th>PV Capacity</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for relation in pv_pvc_relationships %}
+        <tr>
+            <td>{{ relation.PVC.name }}</td>
+            <td>{{ relation.PVC.namespace }}</td>
+            <td>{{ relation.PVC.status }}</td>
+            <td>{{ relation.PVC.capacity }}</td>
+            <td>{{ relation.PV.name if relation.PV else 'No matching PV' }}</td>
+            <td>{{ relation.PV.status if relation.PV else 'N/A' }}</td>
+            <td>{{ relation.PV.capacity if relation.PV else 'N/A' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 <h3>Persistent Volumes (PVs)</h3>
 <table id="pvsTable" class="dataTable">
     <thead>
@@ -40,26 +68,6 @@
     </tbody>
 </table>
 
-<h3>Persistent Volume Claims (PVCs)</h3>
-<table id="pvcsTable" class="dataTable">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Namespace</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for pvc in persistent_volume_claims %}
-        <tr>
-            <td>{{ pvc.name }}</td>
-            <td>{{ pvc.namespace }}</td>
-            <td>{{ pvc.status }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
 <!-- DataTables Initialization -->
 <script>
     $(document).ready(function() {
@@ -71,7 +79,7 @@
             "autoWidth": false,
             "responsive": true
         });
-        $('#pvcsTable').DataTable({
+        $('#pvspvTable').DataTable({
             "autoWidth": false,
             "responsive": true
         });

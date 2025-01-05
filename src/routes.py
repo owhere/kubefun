@@ -64,14 +64,32 @@ def init_routes(app):
 
     @app.route('/volumes')
     def volumes():
+        """Render the volumes page with updated data."""
+        # Fetch the data
         storage_classes = get_storage_classes()
         persistent_volumes = get_persistent_volumes()
         persistent_volume_claims = get_persistent_volume_claims()
 
-        return render_template('volumes.html', 
-                            storage_classes=storage_classes, 
-                            persistent_volumes=persistent_volumes, 
-                            persistent_volume_claims=persistent_volume_claims)
+        # Prepare data for relationships (if required)
+        pv_pvc_relationships = []
+        for pvc in persistent_volume_claims:
+            matched_pv = next(
+                (pv for pv in persistent_volumes if pv["name"] == pvc["volume_name"]),
+                None
+            )
+            pv_pvc_relationships.append({
+                "PVC": pvc,
+                "PV": matched_pv
+            })
+
+        return render_template(
+            'volumes.html',
+            storage_classes=storage_classes,
+            persistent_volumes=persistent_volumes,
+            persistent_volume_claims=persistent_volume_claims,
+            pv_pvc_relationships=pv_pvc_relationships
+        )
+
 
     @app.route('/node/<node_name>')
     def node_detail(node_name):

@@ -341,9 +341,13 @@ def get_persistent_volumes():
         {
             "type": "PV",
             "name": pv.metadata.name,
-            "capacity": pv.spec.capacity["storage"],
+            "capacity": pv.spec.capacity.get("storage", "Unknown") if pv.spec.capacity else "Unknown",
             "status": pv.status.phase,
-            "storage_class": pv.spec.storage_class_name
+            "storage_class": pv.spec.storage_class_name,
+            "claim_ref": {
+                "name": pv.spec.claim_ref.name,
+                "namespace": pv.spec.claim_ref.namespace
+            } if pv.spec.claim_ref else None
         }
         for pv in pvs.items
     ]
@@ -371,7 +375,8 @@ def get_persistent_volume_claims(namespace=None):
             "namespace": pvc.metadata.namespace,
             "storage_class": pvc.spec.storage_class_name,
             "capacity": pvc.status.capacity.get("storage", "Unknown") if pvc.status.capacity else "Unknown",
-            "status": pvc.status.phase
+            "status": pvc.status.phase,
+            "volume_name": pvc.spec.volume_name  # Link to PV
         }
         for pvc in pvcs.items
     ]
@@ -383,6 +388,46 @@ def search_persistent_volume_claims(query, namespace=None):
     return [
         pvc for pvc in pvcs
         if query.lower() in pvc["name"].lower() or query.lower() in pvc["namespace"].lower()
+    ]
+
+
+# PV and PVC Relationship Functions
+def get_pv_pvc_relationship():
+    """Retrieve and match PVs with their associated PVCs."""
+    pvs = get_persistent_volumes()
+    pvcs = get_persistent_volume_claims()
+
+    relationships = []
+
+    # Match PVCs with PVs
+    for pvc in pvcs:
+        matched_pv = next(
+            (pv for pv in pvs if pv["name"] == pvc["volume_name"]),
+            None
+        )
+        relationships.append({
+            "PVC": pvc["name"],
+            "PVC Namespace": pvc["namespace"],
+            "PVC Status": pvc["status"],
+            "PVC Capacity": pvc["capacity"],
+            "PVC Storage Class": pvc["storage_class"],
+            "PV": matched_pv["name"] if matched_pv else "No matching PV",
+            "PV Status": matched_pv["status"] if matched_pv else "N/A",
+            "PV Capacity": matched_pv["capacity"] if matched_pv else "N/A",
+            "PV Storage Class": matched_pv["storage_class"] if matched_pv else "N/A"
+        })
+
+    return relationships
+
+
+# Search Relationships
+def search_pv_pvc_relationship(query):
+    """Search PV-PVC relationships by PVC or PV name."""
+    relationships = get_pv_pvc_relationship()
+    return [
+        relationship for relationship in relationships
+        if query.lower() in relationship["PVC"].lower() or
+           (relationship["PV"] != "No matching PV" and query.lower() in relationship["PV"].lower())
     ]
 
 
