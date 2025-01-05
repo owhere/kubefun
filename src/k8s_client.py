@@ -631,10 +631,9 @@ def parse_cpu(value):
     else:  # Assume already in cores
         return float(value)
 
-
 def get_top_nodes():
     """
-    Retrieve top nodes with CPU and Memory usage as percentages.
+    Retrieve top nodes with CPU and Memory usage as percentages, converting memory to GiB.
     """
     try:
         # Fetch node metrics
@@ -663,24 +662,27 @@ def get_top_nodes():
         for node in metrics["items"]:
             name = node["metadata"]["name"]
             cpu_usage = int(node["usage"]["cpu"].strip("n")) / 1e9  # Convert nanocores to cores
-            memory_usage = int(node["usage"]["memory"].strip("Ki"))  # Convert Ki to Mi for calculation
+            memory_usage_mi = int(node["usage"]["memory"].strip("Ki")) // 1024  # Convert Ki to Mi
 
             total_cpu = int(node_capacity[name]["cpu"])  # Total CPU in cores
-            total_memory = int(node_capacity[name]["memory"].strip("Ki"))  # Total Memory in Mi
+            total_memory_mi = int(node_capacity[name]["memory"].strip("Ki")) // 1024  # Convert Ki to Mi
+
+            # Convert memory to GiB
+            memory_usage_gi = memory_usage_mi / 1024
+            total_memory_gi = total_memory_mi / 1024
 
             top_nodes.append({
                 "name": name,
                 "cpu": f"{cpu_usage:.2f} cores ({(cpu_usage / total_cpu) * 100:.1f}%)",
-                "memory": f"{memory_usage} Mi ({(memory_usage / total_memory) * 100:.1f}%)"
+                "memory": f"{memory_usage_gi:.2f} Gi ({(memory_usage_gi / total_memory_gi) * 100:.1f}%)"
             })
 
         return sorted(top_nodes, key=lambda x: x["cpu"], reverse=True)
 
     except client.exceptions.ApiException as e:
-        logger.error(f"Metrics Server unavailable for nodes: {e}")
+        logger.error(f"Failed to fetch node metrics: {e}")
         # Return fallback data
         return [{"name": "N/A", "cpu": "N/A", "memory": "N/A"}]
-
 
 def parse_memory(value):
     """
