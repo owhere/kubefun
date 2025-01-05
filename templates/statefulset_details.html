@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>StatefulSet: {{ statefulset.metadata.name }}</h2>
+<p><strong>Namespace:</strong> {{ statefulset.metadata.namespace }}</p>
+<p><strong>Replicas:</strong> {{ statefulset.spec.replicas }}</p>
+<p><strong>Ready Replicas:</strong> {{ statefulset.status.ready_replicas }}</p>
+<p><strong>Service Name:</strong> {{ statefulset.spec.service_name }}</p>
+<p><strong>Labels:</strong> {{ statefulset.metadata.labels }}</p>
+<p><strong>Selector:</strong> {{ statefulset.spec.selector.match_labels }}</p>
+<p><strong>Creation Timestamp:</strong> {{ statefulset.metadata.creation_timestamp }}</p>
+
+<h3>Volume Claims</h3>
+{% if statefulset.spec.volume_claim_templates %}
+<table class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Storage Class</th>
+            <th>Access Modes</th>
+            <th>Requested Storage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pvc in statefulset.spec.volume_claim_templates %}
+        <tr>
+            <td>{{ pvc.metadata.name }}</td>
+            <td>{{ pvc.spec.storage_class_name }}</td>
+            <td>{% for mode in pvc.spec.access_modes %}{{ mode }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td>{{ pvc.spec.resources.requests.storage }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No volume claims defined for this StatefulSet.</p>
+{% endif %}
+
+
+<h3>Containers</h3>
+<table class="w3-table w3-bordered w3-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Image</th>
+            <th>Ports</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for container in statefulset.spec.template.spec.containers %}
+        <tr>
+            <td>{{ container.name }}</td>
+            <td>{{ container.image }}</td>
+            <td>{% if container.ports %}
+                    {% for port in container.ports %}
+                        {{ port.container_port }}/{{ port.protocol }}
+                    {% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Description</h3>
+
+<div class="w3-card w3-padding">
+    <!-- Preformatted block for the JSON content -->
+    <pre><code class="language-json">{{ statefulset | tojson(indent=2) | safe }}</code></pre>
+</div>
+
+{% endblock %}

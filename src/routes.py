@@ -1,8 +1,8 @@
 from flask import render_template, request
-from .k8s_client import get_nodes, get_pods, get_secrets, get_services, get_deployments
+from .k8s_client import get_nodes, get_pods, get_secrets, get_services, get_deployments, get_statefulsets
 from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources, get_cluster_info
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
-from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events
+from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events, get_statefulset_details
 from .k8s_client import get_service_details, get_secret_details, get_storageclass_details
 from .k8s_client import get_top_nodes, get_top_pods
 
@@ -39,7 +39,9 @@ def init_routes(app):
         """Display deployments, optionally filtered by namespace."""
         namespace = request.args.get('namespace')  
         deployments = get_deployments(namespace)
-        return render_template('deployments.html', deployments=deployments, namespace=namespace)
+        statefulsets = get_statefulsets(namespace)
+
+        return render_template('deployments.html', deployments=deployments, statefulsets=statefulsets, namespace=namespace)
 
     @app.route('/pods')
     def pods():
@@ -107,6 +109,19 @@ def init_routes(app):
     def deployment_details(namespace, deployment_name):
         """Render deployment details."""
         details = get_deployment_details(namespace, deployment_name)
+        if "error" in details:
+            return details["error"], 400
+        return render_template("deployment_details.html", deployment=details)
+    
+    @app.route('/statefulset/<namespace>/<name>')
+    def statefulset_details(namespace, name):
+        details = get_statefulset_details(namespace, name)
+        return render_template('statefulset_details.html', statefulset=details)
+    
+    @app.route("/statefulsets/<namespace>/<stateful_name>")
+    def stateful_details(namespace, stateful_name):
+        """Render deployment details."""
+        details = get_statefulset_details(namespace, stateful_name)
         if "error" in details:
             return details["error"], 400
         return render_template("deployment_details.html", deployment=details)

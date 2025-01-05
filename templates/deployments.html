@@ -13,7 +13,7 @@
     {% endif %}
 </form>
 
-<!-- Pods Table -->
+<!-- deployments Table -->
 <table id="deploymentsTable" class="dataTable">
     <thead>
         <tr>
@@ -35,10 +35,37 @@
     </tbody>
 </table>
 
+<h2>Statefulsets{% if namespace %} in Namespace: {{ namespace }}{% endif %}</h2>
+<!-- Statefulsets Table -->
+<table id="statefulTable" class="dataTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Replicas</th>
+            <th>Ready Replicas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dep in statefulsets %}
+        <tr>
+            <td><a href="{{ url_for('statefulset_details', namespace=dep.namespace, name=dep.name) }}">{{ dep.name }}</a></td>
+            <td>{{ dep.namespace }}</td>
+            <td>{{ dep.replicas}}</td>
+            <td>{{ dep.ready_replicas}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 <!-- Initialize DataTables -->
 <script>
     $(document).ready(function() {
         $('#deploymentsTable').DataTable({
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('#statefulTable').DataTable({
             "autoWidth": false,
             "responsive": true
         });

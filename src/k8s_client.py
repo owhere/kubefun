@@ -106,7 +106,6 @@ def get_pods(namespace=None):
 
     return pod_data
 
-
 def search_pods(query, namespace=None):
     """Search pods by name or namespace."""
     pods = get_pods(namespace)
@@ -128,7 +127,6 @@ def get_namespaces():
         }
         for ns in namespaces.items
     ]
-
 
 def search_namespaces(query):
     """Search namespaces by name."""
@@ -156,7 +154,6 @@ def get_deployments(namespace=None):
         for dep in deployments.items
     ]
 
-
 def search_deployments(query, namespace=None):
     """Search deployments by name or namespace."""
     deployments = get_deployments(namespace)
@@ -165,6 +162,50 @@ def search_deployments(query, namespace=None):
         if query.lower() in dep["name"].lower() or query.lower() in dep["namespace"].lower()
     ]
 
+# StatefulSet Functions
+def get_statefulsets(namespace=None):
+    """Retrieve statefulsets from Kubernetes."""
+    apps_api = client.AppsV1Api()
+    if namespace:
+        statefulsets = apps_api.list_namespaced_stateful_set(namespace)
+    else:
+        statefulsets = apps_api.list_stateful_set_for_all_namespaces()
+
+    return [
+        {
+            "type": "StatefulSet",
+            "name": sts.metadata.name,
+            "namespace": sts.metadata.namespace,
+            "replicas": sts.spec.replicas,
+            "ready_replicas": sts.status.ready_replicas or 0
+        }
+        for sts in statefulsets.items
+    ]
+
+def search_statefulsets(query, namespace=None):
+    """Search statefulsets by name or namespace."""
+    statefulsets = get_statefulsets(namespace)
+    return [
+        sts for sts in statefulsets
+        if query.lower() in sts["name"].lower() or query.lower() in sts["namespace"].lower()
+    ]
+
+# Combined Function (Optional)
+def get_workloads(namespace=None):
+    """Retrieve both deployments and statefulsets from Kubernetes."""
+    deployments = get_deployments(namespace)
+    statefulsets = get_statefulsets(namespace)
+
+    # Combine Deployments and StatefulSets into one list
+    return deployments + statefulsets
+
+def search_workloads(query, namespace=None):
+    """Search deployments and statefulsets by name or namespace."""
+    workloads = get_workloads(namespace)
+    return [
+        workload for workload in workloads
+        if query.lower() in workload["name"].lower() or query.lower() in workload["namespace"].lower()
+    ]
 
 # Service Functions
 def get_services(namespace=None):
@@ -381,7 +422,6 @@ def get_persistent_volume_claims(namespace=None):
         for pvc in pvcs.items
     ]
 
-
 def search_persistent_volume_claims(query, namespace=None):
     """Search persistent volume claims by name or namespace."""
     pvcs = get_persistent_volume_claims(namespace)
@@ -389,7 +429,6 @@ def search_persistent_volume_claims(query, namespace=None):
         pvc for pvc in pvcs
         if query.lower() in pvc["name"].lower() or query.lower() in pvc["namespace"].lower()
     ]
-
 
 # PV and PVC Relationship Functions
 def get_pv_pvc_relationship():
@@ -419,7 +458,6 @@ def get_pv_pvc_relationship():
 
     return relationships
 
-
 # Search Relationships
 def search_pv_pvc_relationship(query):
     """Search PV-PVC relationships by PVC or PV name."""
@@ -429,7 +467,6 @@ def search_pv_pvc_relationship(query):
         if query.lower() in relationship["PVC"].lower() or
            (relationship["PV"] != "No matching PV" and query.lower() in relationship["PV"].lower())
     ]
-
 
 # General Search
 def search_kubernetes_resources(query):
@@ -445,6 +482,7 @@ def search_kubernetes_resources(query):
     results.extend(search_services(query))
     results.extend(search_secrets(query))
     results.extend(search_deployments(query))
+    results.extend(search_statefulsets(query))
     results.extend(search_persistent_volumes(query))
     results.extend(search_persistent_volume_claims(query))
     results.extend(search_storage_classes(query))
@@ -586,6 +624,19 @@ def get_deployment_details(namespace, deployment_name):
         return deployment.to_dict()
     except client.exceptions.ApiException as e:
         return {"error": f"Failed to fetch deployment details: {e}"}
+    
+def get_statefulset_details(namespace, statefulset_name):
+    """
+    Retrieve detailed information about a specific StatefulSet.
+    """
+    try:
+        apps_api = client.AppsV1Api()
+        statefulset = apps_api.read_namespaced_stateful_set(name=statefulset_name, namespace=namespace)
+
+        # Return the raw StatefulSet object as a dictionary
+        return statefulset.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch StatefulSet details: {e}"}
     
 def get_pod_details(namespace, pod_name):
     """
