@@ -63,7 +63,7 @@
     <tbody>
         {% for pv in persistent_volumes %}
         <tr>
-            <td>{{ pv.name }}</td>
+            <td><a href="{{ url_for('pv_details', name=pv.name) }}">{{ pv.name }}</a></td>
             <td>{{ pv.capacity }}</td>
             <td>{{ pv.status }}</td>
             <td>{{ pv.storage_class }}</td>
