@@ -4,7 +4,7 @@ from .k8s_client import get_namespaces_with_counts, search_kubernetes_resources,
 from .k8s_client import get_storage_classes, get_persistent_volumes, get_persistent_volume_claims
 from .k8s_client import get_node_details, get_namespace_details, get_deployment_details, get_pod_details, get_pod_events, get_statefulset_details
 from .k8s_client import get_service_details, get_secret_details, get_storageclass_details
-from .k8s_client import get_top_nodes, get_top_pods
+from .k8s_client import get_top_nodes, get_top_pods, get_pv_details, get_pvc_details
 
 def init_routes(app):
     """Register all routes for the Flask app."""
@@ -172,6 +172,28 @@ def init_routes(app):
         if "error" in details:
             return details["error"], 400
         return render_template("storageclass_details.html", storageclass=details)
+
+    @app.route('/pv/<name>')
+    def pv_details(name):
+        """Display details of a specific Persistent Volume."""
+        details = get_pv_details(name)
+        return render_template(
+            'details.html',
+            resource_type="Persistent Volume",
+            resource_name=name,
+            details=details
+        )
+    
+    @app.route('/pvc/<namespace>/<name>')
+    def pvc_details(namespace, name):
+        """Display details of a specific Persistent Volume Claim."""
+        details = get_pvc_details(namespace, name)
+        return render_template(
+            'details.html',
+            resource_type="Persistent Volume Claim",
+            resource_name=f"{namespace}/{name}",
+            details=details
+        )
 
     @app.route('/about')
     def about():

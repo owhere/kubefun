@@ -385,10 +385,8 @@ def get_persistent_volumes():
             "capacity": pv.spec.capacity.get("storage", "Unknown") if pv.spec.capacity else "Unknown",
             "status": pv.status.phase,
             "storage_class": pv.spec.storage_class_name,
-            "claim_ref": {
-                "name": pv.spec.claim_ref.name,
-                "namespace": pv.spec.claim_ref.namespace
-            } if pv.spec.claim_ref else None
+            "claim_name": pv.spec.claim_ref.name if pv.spec.claim_ref else "Unbound",
+            "claim_namespace": pv.spec.claim_ref.namespace if pv.spec.claim_ref else "N/A"
         }
         for pv in pvs.items
     ]
@@ -467,6 +465,25 @@ def search_pv_pvc_relationship(query):
         if query.lower() in relationship["PVC"].lower() or
            (relationship["PV"] != "No matching PV" and query.lower() in relationship["PV"].lower())
     ]
+
+def get_pv_details(name):
+    """Retrieve detailed information about a specific Persistent Volume."""
+    try:
+        core_api = client.CoreV1Api()
+        pv = core_api.read_persistent_volume(name=name)
+        return pv.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch PV details: {e}"}
+
+def get_pvc_details(namespace, name):
+    """Retrieve detailed information about a specific Persistent Volume Claim."""
+    try:
+        core_api = client.CoreV1Api()
+        pvc = core_api.read_namespaced_persistent_volume_claim(name=name, namespace=namespace)
+        return pvc.to_dict()
+    except client.exceptions.ApiException as e:
+        return {"error": f"Failed to fetch PVC details: {e}"}
+
 
 # General Search
 def search_kubernetes_resources(query):
