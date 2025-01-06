@@ -54,7 +54,7 @@ Kubefun is a lightweight and intuitive Kubernetes resource explorer that provide
    ```
 
 2. **Deploy with `kubectl` and `kustomize`**:
-   # AWS EKS Deployment
+   #### AWS EKS Deployment
 
    - Create namespace kubefun
    ```bash
